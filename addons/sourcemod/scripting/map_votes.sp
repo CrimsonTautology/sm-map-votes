@@ -101,7 +101,8 @@ public OnSocketConnected(Handle:socket, any:headers_pack)
 
 
     //This Formats the headers needed to make a HTTP/1.1 POST request.
-    Format(request_string, sizeof(request_string), "POST %s HTTP/1.1\nHost: %s\nConnection: close\nContent-type: application/x-www-form-urlencoded\nContent-length: %d\n\n%s", route, base_url, strlen(headers), headers);
+    //Format(request, sizeof(request),             "POST %s/playlist.php HTTP/1.1\r\nHost: %s\r\nContent-Length: %i\r\nContent-Type: application/x-www-form-urlencoded\r\nConnection: close\r\n\r\n%s", url, hostname, strlen(postdata), postdata);
+    Format(request_string, sizeof(request_string), "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-type: application/x-www-form-urlencoded\r\nContent-length: %d\r\n\r\n%s", route, base_url, strlen(headers), headers);
     PrintToConsole(0,"%s", request_string);//TODO
     //Sends the Request
     SocketSend(socket, request_string);
