@@ -63,7 +63,9 @@ public OnPluginStart()
 
 public Action:Command_VoteMenu(client, args)
 {
-    //TODO
+    if(client && IsClientAuthorized(client)){
+        CallVoteOnClient(client);
+    }
 }
 
 public Action:Command_VoteUp(client, args)
@@ -240,6 +242,29 @@ public CastVote(client, value)
 
 }
 
+public CallVoteOnClient(client)
+{
+    new Handle:menu = CreateMenu(VoteMenuHandler);
+    SetMenuTitle(menu, "Do you like this map?");
+    AddMenuItem(menu, "yes","Like it.");
+    AddMenuItem(menu, "no","Hate it.");
+    AddMenuItem(menu, "maybe","I have no strong feelings one way or the other.");
+    DisplayMenu(menu, client, 20);
+}
+public VoteMenuHandler(Handle:menu, MenuAction:action, param1, param2)
+{
+    if (action == MenuAction_End)
+    {
+        CloseHandle(menu);
+    } else if (action == MenuAction_VoteCancel)
+    {
+    } else if (action == MenuAction_Select)
+    {
+        new String:info[32];
+        new bool:found = GetMenuItem(menu, param2, info, sizeof(info));
+        PrintToChat(param1, "You selected item: %d (found? %d info: %s)", param2, found, info);
+    }
+}
 public ViewMap(client)
 {
         decl String:map[128], String:url[256], String:base_url[128];
@@ -251,8 +276,7 @@ public ViewMap(client)
         Format(url, sizeof(url),
                 "http://%s%s/%s", base_url, MAPS_ROUTE, map);
 
-        ShowVGUIPanel(client, "info", panel, GetConVarBool(debugCvar));
-        CloseHandle(panel)
+        ShowMOTDPanel(client, "Map Viewer", base_url, MOTDPANEL_TYPE_URL);
 
 }
 
