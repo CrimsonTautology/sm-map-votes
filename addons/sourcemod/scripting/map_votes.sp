@@ -279,7 +279,7 @@ public ViewMap(client)
         Format(url, sizeof(url),
                 "http://%s%s/%s", base_url, MAPS_ROUTE, map);
 
-        ShowMOTDPanel(client, "Map Viewer", base_url, MOTDPANEL_TYPE_URL);
+        ShowMOTDPanel(client, "Map Viewer", url, MOTDPANEL_TYPE_URL);
 
 }
 
