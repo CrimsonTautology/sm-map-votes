@@ -246,11 +246,12 @@ public CallVoteOnClient(client)
 {
     new Handle:menu = CreateMenu(VoteMenuHandler);
     SetMenuTitle(menu, "Do you like this map?");
-    AddMenuItem(menu, "yes","Like it.");
-    AddMenuItem(menu, "no","Hate it.");
-    AddMenuItem(menu, "maybe","I have no strong feelings one way or the other.");
+    AddMenuItem(menu, "1","Like it.");
+    AddMenuItem(menu, "-1","Hate it.");
+    AddMenuItem(menu, "0","I have no strong feelings one way or the other.");
     DisplayMenu(menu, client, 20);
 }
+
 public VoteMenuHandler(Handle:menu, MenuAction:action, param1, param2)
 {
     if (action == MenuAction_End)
@@ -261,8 +262,10 @@ public VoteMenuHandler(Handle:menu, MenuAction:action, param1, param2)
     } else if (action == MenuAction_Select)
     {
         new String:info[32];
-        new bool:found = GetMenuItem(menu, param2, info, sizeof(info));
-        PrintToChat(param1, "You selected item: %d (found? %d info: %s)", param2, found, info);
+        GetMenuItem(menu, param2, info, sizeof(info));
+        new value = StringToInt(info);
+
+        CastVote(param1, value);
     }
 }
 public ViewMap(client)
