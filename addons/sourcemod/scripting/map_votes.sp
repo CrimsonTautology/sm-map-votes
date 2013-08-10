@@ -15,6 +15,7 @@
 #include <sourcemod>
 #include <socket>
 #include <base64>
+#include <json>
 
 #define PLUGIN_VERSION "0.1"
 
