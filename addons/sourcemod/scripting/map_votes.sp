@@ -29,6 +29,10 @@ public Plugin:myinfo = {
 #define WRITE_MESSAGE_ROUTE "/v1/api/write_message/"
 #define SERVER_QUERY_ROUTE "/v1/api/server_query/"
 
+#define MAX_STEAMID_LENGTH 21 
+#define MAX_COMMUNITYID_LENGTH 18 
+
+
 new Handle:g_Cvar_MapVotesUrl = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesPort = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesApiKey = INVALID_HANDLE;
@@ -60,9 +64,9 @@ public Action:Command_VoteMenu(client, args)
 
 public Action:Command_VoteUp(client, args)
 {
-    if(!IsFakeClient(client)){
+    //if(!IsFakeClient(client)){
         CastVote(client, 1);
-    }
+    //}
 }
 
 public Action:Command_VoteDown(client, args)
@@ -117,6 +121,32 @@ public OnSocketError(Handle:socket, const errorType, const errorNum, any:headers
     CloseHandle(socket);
 }
 
+
+//By 11530
+//GetSteamAccountID(client) does not work because we don't have 64 bit types
+stock bool:GetCommunityIDString(const String:SteamID[], String:CommunityID[], const CommunityIDSize) 
+{ 
+    decl String:SteamIDParts[3][11]; 
+    new const String:Identifier[] = "76561197960265728"; 
+
+    if ((CommunityIDSize < 1) || (ExplodeString(SteamID, ":", SteamIDParts, sizeof(SteamIDParts), sizeof(SteamIDParts[])) != 3)) 
+    { 
+        CommunityID[0] = '\0'; 
+        return false; 
+    } 
+
+    new Current, CarryOver = (SteamIDParts[1][0] == '1'); 
+    for (new i = (CommunityIDSize - 2), j = (strlen(SteamIDParts[2]) - 1), k = (strlen(Identifier) - 1); i >= 0; i--, j--, k--) 
+    { 
+        Current = (j >= 0 ? (2 * (SteamIDParts[2][j] - '0')) : 0) + CarryOver + (k >= 0 ? ((Identifier[k] - '0') * 1) : 0); 
+        CarryOver = Current / 10; 
+        CommunityID[i] = (Current % 10) + '0'; 
+    } 
+
+    CommunityID[CommunityIDSize - 1] = '\0'; 
+    return true; 
+}  
+
 public MapVotesCall(String:route[128], String:query_params[512])
 {
     new port= GetConVarInt(g_Cvar_MapVotesPort);
@@ -137,13 +167,17 @@ public WriteMessage(client, String:message[])
 
 public CastVote(client, value)
 {
-    //new uid = GetSteamAccountID(client);
-    new uid=76561197998903004;
+    //new uid = GetClientAuthString(client);
+    //38637
+    //STEAM_0:0:19318638
+    //new String:uid[64]="76561197998903004";
 
-    if(uid <= 0){
-        LogError("[MapVotes] invalid user; client(%d) has steamid64 of %ld", client, uid);
-    }else if(!(value == -1 || value == 0 || value == 1)){
-        LogError("[MapVotes] invalid vote value %d (steam_user: %ld)", value, uid);
+    decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
+    GetClientAuthString(client, buffer, sizeof(buffer));
+    GetCommunityIDString(buffer, uid, sizeof(uid));
+
+    if(!(value == -1 || value == 0 || value == 1)){
+        LogError("[MapVotes] invalid vote value %d (steam_user: %s)", value, uid);
     }else{
         decl String:query_params[512], String:map[128];
 
@@ -151,7 +185,9 @@ public CastVote(client, value)
 
         Format(query_params, sizeof(query_params),
             "map=%s&uid=%s&value=%d", map, uid, value);
-        MapVotesCall(CAST_VOTE_ROUTE, query_params);
+
+        PrintToConsole(0, "[MapVotes] %s", query_params);
+        //MapVotesCall(CAST_VOTE_ROUTE, query_params);
     }
 
 }
