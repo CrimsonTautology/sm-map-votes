@@ -14,6 +14,7 @@
 
 #include <sourcemod>
 #include <socket>
+#include <base64>
 
 #define PLUGIN_VERSION "0.1"
 
@@ -187,9 +188,13 @@ public HTTPPost(String:base_url[128], String:route[128], String:query_params[512
 
     SocketConnect(socket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, base_url, port);
 }
-public WriteMessage(client, String:message[])
+public WriteMessage(client, String:message[256])
 {
-    //EncodeMessage(base64, sizeof(base64), message);
+    //Encode the message to be url safe
+    decl String:base64[256], String:base64_url[256];
+    EncodeBase64(base64, sizeof(base64), message);
+    Base64MimeToUrl(base64_url, sizeof(base64_url), base64);
+
     decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
     GetClientAuthString(client, buffer, sizeof(buffer));
     GetCommunityIDString(buffer, uid, sizeof(uid));
@@ -197,9 +202,9 @@ public WriteMessage(client, String:message[])
     decl String:query_params[512], String:map[128];
     GetCurrentMap(map, sizeof(map));
     Format(query_params, sizeof(query_params),
-            "map=%s&uid=%s&comment=%s", map, uid, message);
+            "map=%s&uid=%s&comment=%s", map, uid, base64);
 
-    MapVotesCall(CAST_VOTE_ROUTE, query_params);
+    MapVotesCall(WRITE_MESSAGE_ROUTE, query_params);
 }
 
 public CastVote(client, value)
