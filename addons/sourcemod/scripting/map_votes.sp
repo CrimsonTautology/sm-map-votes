@@ -202,7 +202,7 @@ public WriteMessage(client, String:message[256])
     decl String:query_params[512], String:map[128];
     GetCurrentMap(map, sizeof(map));
     Format(query_params, sizeof(query_params),
-            "map=%s&uid=%s&comment=%s", map, uid, base64);
+            "map=%s&uid=%s&comment=%s&base64=true", map, uid, base64);
 
     MapVotesCall(WRITE_MESSAGE_ROUTE, query_params);
 }
