@@ -25,9 +25,9 @@ public Plugin:myinfo = {
     url = "https://github.com/CrimsonTautology/sm_map_votes"
 };
 
-#define CAST_VOTE_ROUTE "/v1/api/cast_vote/"
-#define WRITE_MESSAGE_ROUTE "/v1/api/write_message/"
-#define SERVER_QUERY_ROUTE "/v1/api/server_query/"
+#define CAST_VOTE_ROUTE "/v1/api/cast_vote"
+#define WRITE_MESSAGE_ROUTE "/v1/api/write_message"
+#define SERVER_QUERY_ROUTE "/v1/api/server_query"
 
 #define MAX_STEAMID_LENGTH 21 
 #define MAX_COMMUNITYID_LENGTH 18 
@@ -159,7 +159,7 @@ public MapVotesCall(String:route[128], String:query_params[512])
     GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
     GetConVarString(g_Cvar_MapVotesApiKey, api_key, sizeof(api_key));
 
-    Format(query_params, sizeof(query_params), "%s&api_key=%s", query_params, api_key);
+    Format(query_params, sizeof(query_params), "%s&access_token=%s", query_params, api_key);
 
     HTTPPost(base_url, route, query_params, port);
 }
