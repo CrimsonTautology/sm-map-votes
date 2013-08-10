@@ -52,6 +52,7 @@ public OnPluginStart()
     RegConsoleCmd("sm_vote_up", Command_VoteUp, "Vote that you like the current map");
     RegConsoleCmd("sm_vote_down", Command_VoteDown, "Vote that you hate the current map");
     RegConsoleCmd("sm_map_comment", Command_MapComment, "Comment on the current map");
+    RegConsoleCmd("sm_mc", Command_MapComment, "Comment on the current map");
     RegConsoleCmd("sm_call_vote", Command_CallVote, "Popup a vote panel to every player on the server that has not yet voted on this map");
 
 }
@@ -64,9 +65,9 @@ public Action:Command_VoteMenu(client, args)
 
 public Action:Command_VoteUp(client, args)
 {
-    //if(client && IsClientAuthorized(client)){
+    if(client && IsClientAuthorized(client)){
         CastVote(client, 1);
-    //}
+    }
 }
 
 public Action:Command_VoteDown(client, args)
@@ -78,9 +79,19 @@ public Action:Command_VoteDown(client, args)
 
 public Action:Command_MapComment(client, args)
 {
-    if(client && IsClientAuthorized(client)){
-        //WriteMessage(client, args);
+    if (args < 1)
+    {
+        ReplyToCommand(client, "[MapVotes] Usage: !map_comment <comment>");
+        return Plugin_Handled;
     }
+
+    if(client && IsClientAuthorized(client)){
+        decl String:comment[256];
+        GetCmdArgString(comment, sizeof(comment));
+        WriteMessage(client, comment);
+    }
+
+    return Plugin_Handled;
 }
 
 public Action:Command_CallVote(client, args)
@@ -101,16 +112,14 @@ public OnSocketConnected(Handle:socket, any:headers_pack)
 
 
     //This Formats the headers needed to make a HTTP/1.1 POST request.
-    //Format(request, sizeof(request),             "POST %s/playlist.php HTTP/1.1\r\nHost: %s\r\nContent-Length: %i\r\nContent-Type: application/x-www-form-urlencoded\r\nConnection: close\r\n\r\n%s", url, hostname, strlen(postdata), postdata);
     Format(request_string, sizeof(request_string), "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-type: application/x-www-form-urlencoded\r\nContent-length: %d\r\n\r\n%s", route, base_url, strlen(headers), headers);
-    PrintToConsole(0,"%s", request_string);//TODO
-    //Sends the Request
+    //PrintToConsole(0,"%s", request_string);//TODO
     SocketSend(socket, request_string);
 }
 
 public OnSocketReceive(Handle:socket, String:receiveData[], const dataSize, any:headers_pack) {
     //Used for data received back
-    PrintToConsole(0,"[MapVotes - 3] %s", receiveData);//TODO
+    PrintToConsole(0,"%s", receiveData);//TODO
 }
 
 public OnSocketDisconnected(Handle:socket, any:headers_pack) {
@@ -181,6 +190,16 @@ public HTTPPost(String:base_url[128], String:route[128], String:query_params[512
 public WriteMessage(client, String:message[])
 {
     //EncodeMessage(base64, sizeof(base64), message);
+    decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
+    GetClientAuthString(client, buffer, sizeof(buffer));
+    GetCommunityIDString(buffer, uid, sizeof(uid));
+
+    decl String:query_params[512], String:map[128];
+    GetCurrentMap(map, sizeof(map));
+    Format(query_params, sizeof(query_params),
+            "map=%s&uid=%s&comment=%s", map, uid, message);
+
+    MapVotesCall(CAST_VOTE_ROUTE, query_params);
 }
 
 public CastVote(client, value)
@@ -190,12 +209,9 @@ public CastVote(client, value)
     //STEAM_0:0:19318638
     //new String:uid[64]="76561197998903004";
 
-    /*
     decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
     GetClientAuthString(client, buffer, sizeof(buffer));
     GetCommunityIDString(buffer, uid, sizeof(uid));
-    */
-    new String:uid[64]="76561197998903004";
 
     if(!(value == -1 || value == 0 || value == 1)){
         LogError("[MapVotes] invalid vote value %d (steam_user: %s)", value, uid);
@@ -205,9 +221,8 @@ public CastVote(client, value)
         GetCurrentMap(map, sizeof(map));
 
         Format(query_params, sizeof(query_params),
-            "map=%s&uid=%s&value=%d", map, uid, value);
+                "map=%s&uid=%s&value=%d", map, uid, value);
 
-        //PrintToChatAll("[MapVotes] %s", query_params);//TODO
         MapVotesCall(CAST_VOTE_ROUTE, query_params);
     }
 
