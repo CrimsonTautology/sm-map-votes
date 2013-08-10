@@ -29,6 +29,7 @@ public Plugin:myinfo = {
 #define CAST_VOTE_ROUTE "/v1/api/cast_vote"
 #define WRITE_MESSAGE_ROUTE "/v1/api/write_message"
 #define SERVER_QUERY_ROUTE "/v1/api/server_query"
+#define MAPS_ROUTE "/maps"
 
 #define MAX_STEAMID_LENGTH 21 
 #define MAX_COMMUNITYID_LENGTH 18 
@@ -54,6 +55,7 @@ public OnPluginStart()
     RegConsoleCmd("sm_vote_down", Command_VoteDown, "Vote that you hate the current map");
     RegConsoleCmd("sm_map_comment", Command_MapComment, "Comment on the current map");
     RegConsoleCmd("sm_mc", Command_MapComment, "Comment on the current map");
+    RegConsoleCmd("sm_view_map", Command_ViewMap, "View the Map Votes web page for this map");
     RegConsoleCmd("sm_call_vote", Command_CallVote, "Popup a vote panel to every player on the server that has not yet voted on this map");
 
 }
@@ -75,6 +77,13 @@ public Action:Command_VoteDown(client, args)
 {
     if(client && IsClientAuthorized(client)){
         CastVote(client, -1);
+    }
+}
+
+public Action:Command_ViewMap(client, args)
+{
+    if(client && IsClientAuthorized(client)){
+        ViewMap(client);
     }
 }
 
@@ -228,6 +237,22 @@ public CastVote(client, value)
 
         MapVotesCall(CAST_VOTE_ROUTE, query_params);
     }
+
+}
+
+public ViewMap(client)
+{
+        decl String:map[128], String:url[256], String:base_url[128];
+        GetCurrentMap(map, sizeof(map));
+        GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
+        ReplaceString(base_url, sizeof(base_url), "http://", "", false);
+        ReplaceString(base_url, sizeof(base_url), "https://", "", false);
+
+        Format(url, sizeof(url),
+                "http://%s%s/%s", base_url, MAPS_ROUTE, map);
+
+        ShowVGUIPanel(client, "info", panel, GetConVarBool(debugCvar));
+        CloseHandle(panel)
 
 }
 
