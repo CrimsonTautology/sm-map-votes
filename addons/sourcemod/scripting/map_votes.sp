@@ -74,7 +74,7 @@ public Action:Command_CallVote(client, args)
 
 public OnSocketConnected(Handle:socket, any:headers_pack)
 {
-    ResetPack(headers_pack)
+    ResetPack(headers_pack);
     new String:headers[1024];
     ReadPackString(headers_pack, headers, sizeof(headers));
 
@@ -107,24 +107,6 @@ public OnSocketError(Handle:socket, const errorType, const errorNum, any:headers
 
 public WriteMessage(client, String:message[])
 {
-    new Handle:socket = SocketCreate(SOCKET_TCP, OnPostError);
-    decl String:hostname[128], String:url[128], String:request[2048], String:authToken[64], String:postdata[2048];
-    GetConVarString(djUrlCvar, url, sizeof(url));
-    new Handle:pack = CreateDataPack();
-    WritePackCell(pack, client);
-    WritePackCell(pack, 2); // 1 = adding, 2 = deleting, 3 = modifying
-    ReplaceString(url, sizeof(url), "http://", "", false);
-    if(SplitString(url, "/", hostname, sizeof(hostname)) == -1) {
-        LogError("Bad URL input");
-        return;
-    }
-    ReplaceString(url, sizeof(url), hostname, "", false);
-    GetConVarString(authKeyCvar, authToken, sizeof(authToken));
-    Format(postdata, sizeof(postdata), "auth=%s&id=%s&method=2", authToken, selection);
-    Format(request, sizeof(request), "POST %s/playlist.php HTTP/1.1\r\nHost: %s\r\nContent-Length: %i\r\nContent-Type: application/x-www-form-urlencoded\r\nConnection: close\r\n\r\n%s", url, hostname, strlen(postdata), postdata);
-    WritePackString(pack, request);
-    SocketSetArg(socket, pack);
-    SocketConnect(socket, OnPostConnected, OnPostReceive, OnPostDisconnected, hostname, GetConVarInt(djUrlPortCvar));
 }
 
 public CastVote(client, value)
