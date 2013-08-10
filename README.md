@@ -20,3 +20,8 @@ Set the `sm_map_votes_url` cvar to the URL of your Map Votes webpage.
 USAGE:
 ------
 TODO
+
+OTHER:
+------
+[Code for getting SteamId64s](http://forums.alliedmods.net/showthread.php?t=183443)
+
