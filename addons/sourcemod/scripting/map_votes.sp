@@ -170,6 +170,9 @@ public MapVotesCall(String:route[128], String:query_params[512])
     GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
     GetConVarString(g_Cvar_MapVotesApiKey, api_key, sizeof(api_key));
 
+    ReplaceString(base_url, sizeof(base_url), "http://", "", false);
+    ReplaceString(base_url, sizeof(base_url), "https://", "", false);
+
     Format(query_params, sizeof(query_params), "%s&access_token=%s", query_params, api_key);
 
     HTTPPost(base_url, route, query_params, port);
@@ -209,11 +212,6 @@ public WriteMessage(client, String:message[256])
 
 public CastVote(client, value)
 {
-    //new uid = GetClientAuthString(client);
-    //38637
-    //STEAM_0:0:19318638
-    //new String:uid[64]="76561197998903004";
-
     decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
     GetClientAuthString(client, buffer, sizeof(buffer));
     GetCommunityIDString(buffer, uid, sizeof(uid));
