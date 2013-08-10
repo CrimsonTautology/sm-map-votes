@@ -99,16 +99,17 @@ public OnSocketConnected(Handle:socket, any:headers_pack)
     ReadPackString(headers_pack, route, sizeof(route));
     ReadPackString(headers_pack, base_url, sizeof(base_url));
 
-    PrintToConsole(0,"[MapVotes - 2] %s %s %s", base_url, route, headers);//TODO
 
     //This Formats the headers needed to make a HTTP/1.1 POST request.
-    Format(request_string, sizeof(request_string), "POST /%s HTTP/1.1\nHost: %s\nConnection: close\nContent-type: application/x-www-form-urlencoded\nContent-length: %d\n\n%s", route, base_url, strlen(headers), headers);
+    Format(request_string, sizeof(request_string), "POST %s HTTP/1.1\nHost: %s\nConnection: close\nContent-type: application/x-www-form-urlencoded\nContent-length: %d\n\n%s", route, base_url, strlen(headers), headers);
+    PrintToConsole(0,"%s", request_string);//TODO
     //Sends the Request
     SocketSend(socket, request_string);
 }
 
 public OnSocketReceive(Handle:socket, String:receiveData[], const dataSize, any:headers_pack) {
     //Used for data received back
+    PrintToConsole(0,"[MapVotes - 3] %s", receiveData);//TODO
 }
 
 public OnSocketDisconnected(Handle:socket, any:headers_pack) {
@@ -173,8 +174,6 @@ public HTTPPost(String:base_url[128], String:route[128], String:query_params[512
     WritePackString(headers_pack, route);
     WritePackString(headers_pack, base_url);
     SocketSetArg(socket, headers_pack);
-
-    PrintToConsole(0,"[MapVotes - 1] %s %s %s", base_url, route, query_params);//TODO
 
     SocketConnect(socket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, base_url, port);
 }
