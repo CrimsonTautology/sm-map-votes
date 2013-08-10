@@ -64,21 +64,21 @@ public Action:Command_VoteMenu(client, args)
 
 public Action:Command_VoteUp(client, args)
 {
-    //if(!IsFakeClient(client)){
+    //if(client && IsClientAuthorized(client)){
         CastVote(client, 1);
     //}
 }
 
 public Action:Command_VoteDown(client, args)
 {
-    if(!IsFakeClient(client)){
+    if(client && IsClientAuthorized(client)){
         CastVote(client, -1);
     }
 }
 
 public Action:Command_MapComment(client, args)
 {
-    if(!IsFakeClient(client)){
+    if(client && IsClientAuthorized(client)){
         //WriteMessage(client, args);
     }
 }
@@ -90,15 +90,19 @@ public Action:Command_CallVote(client, args)
 
 public OnSocketConnected(Handle:socket, any:headers_pack)
 {
+    decl String:request_string[1024];
+    decl String:base_url[128], String:route[128];
+
     ResetPack(headers_pack);
     new String:headers[1024];
     ReadPackString(headers_pack, headers, sizeof(headers));
+    ReadPackString(headers_pack, route, sizeof(route));
+    ReadPackString(headers_pack, base_url, sizeof(base_url));
 
-    decl String:request_string[1024];
-    decl String:map_votes_url[128], route[128];
-    GetConVarString(g_Cvar_MapVotesUrl, map_votes_url, sizeof(map_votes_url));
+    PrintToConsole(0,"[MapVotes - 2] %s %s %s", base_url, route, headers);//TODO
+
     //This Formats the headers needed to make a HTTP/1.1 POST request.
-    Format(request_string, sizeof(request_string), "POST /%s HTTP/1.1\nHost: %s\nConnection: close\nContent-type: application/x-www-form-urlencoded\nContent-length: %d\n\n%s", route, map_votes_url, strlen(headers), headers);
+    Format(request_string, sizeof(request_string), "POST /%s HTTP/1.1\nHost: %s\nConnection: close\nContent-type: application/x-www-form-urlencoded\nContent-length: %d\n\n%s", route, base_url, strlen(headers), headers);
     //Sends the Request
     SocketSend(socket, request_string);
 }
@@ -154,15 +158,29 @@ public MapVotesCall(String:route[128], String:query_params[512])
     GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
     GetConVarString(g_Cvar_MapVotesApiKey, api_key, sizeof(api_key));
 
-    HTTPPost(base_url, route, "test", port);
+    Format(query_params, sizeof(query_params), "%s&api_key=%s", query_params, api_key);
+
+    HTTPPost(base_url, route, query_params, port);
 }
+
 public HTTPPost(String:base_url[128], String:route[128], String:query_params[512], port)
 {
+    new String:host[256];
     new Handle:socket = SocketCreate(SOCKET_TCP, OnSocketError);
+
+    new Handle:headers_pack = CreateDataPack();
+    WritePackString(headers_pack, query_params);
+    WritePackString(headers_pack, route);
+    WritePackString(headers_pack, base_url);
+    SocketSetArg(socket, headers_pack);
+
+    PrintToConsole(0,"[MapVotes - 1] %s %s %s", base_url, route, query_params);//TODO
+
     SocketConnect(socket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, base_url, port);
 }
 public WriteMessage(client, String:message[])
 {
+    //EncodeMessage(base64, sizeof(base64), message);
 }
 
 public CastVote(client, value)
@@ -172,9 +190,12 @@ public CastVote(client, value)
     //STEAM_0:0:19318638
     //new String:uid[64]="76561197998903004";
 
+    /*
     decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
     GetClientAuthString(client, buffer, sizeof(buffer));
     GetCommunityIDString(buffer, uid, sizeof(uid));
+    */
+    new String:uid[64]="76561197998903004";
 
     if(!(value == -1 || value == 0 || value == 1)){
         LogError("[MapVotes] invalid vote value %d (steam_user: %s)", value, uid);
@@ -186,8 +207,8 @@ public CastVote(client, value)
         Format(query_params, sizeof(query_params),
             "map=%s&uid=%s&value=%d", map, uid, value);
 
-        PrintToConsole(0, "[MapVotes] %s", query_params);
-        //MapVotesCall(CAST_VOTE_ROUTE, query_params);
+        //PrintToChatAll("[MapVotes] %s", query_params);//TODO
+        MapVotesCall(CAST_VOTE_ROUTE, query_params);
     }
 
 }
