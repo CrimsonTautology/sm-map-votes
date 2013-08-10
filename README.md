@@ -25,4 +25,5 @@ OTHER:
 ------
 [Code for getting SteamId64s](http://forums.alliedmods.net/showthread.php?t=183443)
 [Base64 Library](http://forums.alliedmods.net/showthread.php?t=101764)
+[JSON Library](https://github.com/nikkiii/logupload/blob/master/scripting/include/json.inc)
 
