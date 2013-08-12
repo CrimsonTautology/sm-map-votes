@@ -114,18 +114,10 @@ public Action:Command_CallVote(client, args)
 public OnSocketConnected(Handle:socket, any:headers_pack)
 {
     decl String:request_string[1024];
-    decl String:base_url[128], String:route[128];
 
     ResetPack(headers_pack);
-    new String:headers[1024];
-    ReadPackString(headers_pack, headers, sizeof(headers));
-    ReadPackString(headers_pack, route, sizeof(route));
-    ReadPackString(headers_pack, base_url, sizeof(base_url));
+    ReadPackString(headers_pack, request_string, sizeof(request_string));
 
-
-    //This Formats the headers needed to make a HTTP/1.1 POST request.
-    Format(request_string, sizeof(request_string), "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-type: application/x-www-form-urlencoded\r\nContent-length: %d\r\n\r\n%s", route, base_url, strlen(headers), headers);
-    //PrintToConsole(0,"%s", request_string);//TODO
     SocketSend(socket, request_string);
 }
 
@@ -191,13 +183,14 @@ public MapVotesCall(String:route[128], String:query_params[512])
 
 public HTTPPost(String:base_url[128], String:route[128], String:query_params[512], port)
 {
-    new String:host[256];
     new Handle:socket = SocketCreate(SOCKET_TCP, OnSocketError);
 
+    //This Formats the headers needed to make a HTTP/1.1 POST request.
+    new String:request_string[1024];
+    Format(request_string, sizeof(request_string), "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-type: application/x-www-form-urlencoded\r\nContent-length: %d\r\n\r\n%s", route, base_url, strlen(headers), headers);
+
     new Handle:headers_pack = CreateDataPack();
-    WritePackString(headers_pack, query_params);
-    WritePackString(headers_pack, route);
-    WritePackString(headers_pack, base_url);
+    WritePackString(headers_pack, request_string);
     SocketSetArg(socket, headers_pack);
 
     SocketConnect(socket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, base_url, port);
