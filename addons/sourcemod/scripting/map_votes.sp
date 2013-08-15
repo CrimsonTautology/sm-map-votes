@@ -121,9 +121,9 @@ public OnSocketConnected(Handle:socket, any:headers_pack)
     SocketSend(socket, request_string);
 }
 
-public OnSocketReceive(Handle:socket, String:receiveData[], const dataSize, any:headers_pack) {
+public OnSocketReceive(Handle:socket, String:receive_data[], const data_size, any:headers_pack) {
     //Used for data received back
-    PrintToConsole(0,"%s", receiveData);//TODO
+    PrintToConsole(0,"%s", receive_data);//TODO
 }
 
 public OnSocketDisconnected(Handle:socket, any:headers_pack) {
@@ -133,9 +133,34 @@ public OnSocketDisconnected(Handle:socket, any:headers_pack) {
     CloseHandle(socket);
 }
 
-public OnSocketError(Handle:socket, const errorType, const errorNum, any:headers_pack) {
+public OnSocketError(Handle:socket, const error_type, const error_num, any:headers_pack) {
     // a socket error occured
-    LogError("[MapVotes] socket error %d (errno %d)", errorType, errorNum);
+    if(error_type == EMPTY_HOST )
+    {
+        LogError("[MapVotes] Empty Host (errno %d)", error_num);
+    } else if (error_type == NO_HOST )
+    {
+        LogError("[MapVotes] No Host (errno %d)", error_num);
+    } else if (error_type == CONNECT_ERROR )
+    {
+        LogError("[MapVotes] Connection Error (errno %d)", error_num);
+    } else if (error_type == SEND_ERROR )
+    {
+        LogError("[MapVotes] Send Error (errno %d)", error_num);
+    } else if (error_type == BIND_ERROR )
+    {
+        LogError("[MapVotes] Bind Error (errno %d)", error_num);
+    } else if (error_type == RECV_ERROR )
+    {
+        LogError("[MapVotes] Recieve Error (errno %d)", error_num);
+    } else if (error_type == LISTEN_ERROR )
+    {
+        LogError("[MapVotes] Listen Error (errno %d)", error_num);
+    } else
+    {
+        LogError("[MapVotes] socket error %d (errno %d)", errorType, error_num);
+    }
+
     CloseHandle(headers_pack);
     CloseHandle(socket);
 }
