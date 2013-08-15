@@ -16,6 +16,9 @@
 #include <socket>
 #include <base64>
 
+#undef REQUIRE_EXTENSIONS
+#include <smjansson>
+
 #define PLUGIN_VERSION "0.1"
 
 public Plugin:myinfo = {
@@ -41,6 +44,9 @@ new Handle:g_Cvar_MapVotesApiKey = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesVotingEnabled = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesCommentingEnabled = INVALID_HANDLE;
 
+new bool:g_JanssonEnabled = false;
+
+
 public OnPluginStart()
 {
 
@@ -60,6 +66,23 @@ public OnPluginStart()
 
 }
 
+public OnAllPluginsLoaded() {
+	if (LibraryExists("jansson")) {
+		g_JanssonEnabled = true;
+	}
+}
+
+public OnLibraryAdded(const String:name[]) {
+	if (StrEqual(name, "jansson")) {
+		g_JanssonEnabled = true;
+	}
+}
+
+public OnLibraryRemoved(const String:name[]) {
+	if (StrEqual(name, "jansson")) {
+		g_JanssonEnabled = false;
+	}
+}
 
 public Action:Command_VoteMenu(client, args)
 {
@@ -122,6 +145,9 @@ public OnSocketConnected(Handle:socket, any:headers_pack)
 }
 
 public OnSocketReceive(Handle:socket, String:receive_data[], const data_size, any:headers_pack) {
+    if(g_JanssonEnabled) {
+        //TODO parse JSON response
+    }
     //Used for data received back
     PrintToConsole(0,"%s", receive_data);//TODO
 }
