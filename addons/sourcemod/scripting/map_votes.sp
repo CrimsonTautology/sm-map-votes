@@ -145,8 +145,12 @@ public OnSocketConnected(Handle:socket, any:headers_pack)
 }
 
 public OnSocketReceive(Handle:socket, String:receive_data[], const data_size, any:headers_pack) {
-    if(g_JanssonEnabled) {
+    if(g_JanssonEnabled)
+    {
         //TODO parse JSON response
+    } else
+    {
+        PrintToConsole(0,"Cannot parse JSON; SMJannson not installed");
     }
     //Used for data received back
     PrintToConsole(0,"%s", receive_data);//TODO
