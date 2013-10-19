@@ -58,27 +58,28 @@ public OnPluginStart()
     RegConsoleCmd("sm_mc", Command_MapComment, "Comment on the current map");
     RegConsoleCmd("sm_view_map", Command_ViewMap, "View the Map Votes web page for this map");
     RegConsoleCmd("sm_call_vote", Command_CallVote, "Popup a vote panel to every player on the server that has not yet voted on this map");
+    RegConsoleCmd("sm_test", test, "Popup a vote panel to every player on the server that has not yet voted on this map");
 
 }
 
 
 public Action:Command_VoteMenu(client, args)
 {
-    if(client && IsClientAuthorized(client)){
+    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
         CallVoteOnClient(client);
     }
 }
 
 public Action:Command_VoteUp(client, args)
 {
-    if(client && IsClientAuthorized(client)){
+    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
         CastVote(client, 1);
     }
 }
 
 public Action:Command_VoteDown(client, args)
 {
-    if(client && IsClientAuthorized(client)){
+    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
         CastVote(client, -1);
     }
 }
@@ -92,6 +93,11 @@ public Action:Command_ViewMap(client, args)
 
 public Action:Command_MapComment(client, args)
 {
+    if (!GetConVarBool(g_Cvar_MapVotesCommentingEnabled))
+    {
+        return Plugin_Handled;
+    }
+
     if (args < 1)
     {
         ReplyToCommand(client, "[MapVotes] Usage: !map_comment <comment>");
@@ -125,7 +131,9 @@ public OnSocketConnected(Handle:socket, any:headers_pack)
 
 
     //This Formats the headers needed to make a HTTP/1.1 POST request.
-    Format(request_string, sizeof(request_string), "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-type: application/x-www-form-urlencoded\r\nContent-length: %d\r\n\r\n%s", route, base_url, strlen(headers), headers);
+    Format(request_string, sizeof(request_string),
+            "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-type: application/x-www-form-urlencoded\r\nContent-length: %d\r\n\r\n%s",
+            route, base_url, strlen(headers), headers);
     //PrintToConsole(0,"%s", request_string);//TODO
     SocketSend(socket, request_string);
 }
@@ -286,4 +294,18 @@ public ViewMap(client)
 
 public ServerQuery()
 {
+    //TODO
+}
+
+public Action:test(client, args)
+{
+    new Handle:panel = CreateKeyValues("data");
+
+    KvSetString(panel, "title", "MUSIC");
+    KvSetNum(panel, "type", MOTDPANEL_TYPE_URL);
+    KvSetString(panel, "msg", "http://www.thehoodedalliance.com/smdj/index.php?play=122");
+
+    ShowVGUIPanel(client, "info", panel, false);
+    CloseHandle(panel);
+    return;
 }
