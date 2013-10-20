@@ -19,7 +19,13 @@ Set the `sm_map_votes_url` cvar to the URL of your Map Votes webpage.
 
 USAGE:
 ------
-TODO
+`sm_vote_menu`      Vote that you like the current map
+`sm_vote_up`        Vote that you like the current map
+`sm_vote_down`      Vote that you hate the current map
+`sm_map_comment`    Comment on the current map
+`sm_mc`             Comment on the current map
+`sm_view_map`       View the Map Votes web page for this map
+`sm_call_vote`      Popup a vote panel to every player on the server that has not yet voted on this map
 
 OTHER:
 ------

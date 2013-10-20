@@ -57,7 +57,7 @@ public OnPluginStart()
     g_Cvar_MapVotesVotingEnabled = CreateConVar("sm_map_votes_voting_enabled", "1", "Whether players are allowed to vote on the current map");
     g_Cvar_MapVotesCommentingEnabled = CreateConVar("sm_map_votes_commenting_enabled", "1", "Whether players are allowed to comment on the current map");
 
-    RegConsoleCmd("sm_vote_menu", Command_VoteMenu, "Vote that you like the current map");
+    RegConsoleCmd("sm_vote_menu", Command_VoteMenu, "Bring up a menu to vote on the current map");
     RegConsoleCmd("sm_vote_up", Command_VoteUp, "Vote that you like the current map");
     RegConsoleCmd("sm_vote_down", Command_VoteDown, "Vote that you hate the current map");
     RegConsoleCmd("sm_map_comment", Command_MapComment, "Comment on the current map");
