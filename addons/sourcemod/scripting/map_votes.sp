@@ -64,7 +64,6 @@ public OnPluginStart()
     RegConsoleCmd("sm_mc", Command_MapComment, "Comment on the current map");
     RegConsoleCmd("sm_view_map", Command_ViewMap, "View the Map Votes web page for this map");
     RegConsoleCmd("sm_call_vote", Command_CallVote, "Popup a vote panel to every player on the server that has not yet voted on this map");
-    RegConsoleCmd("sm_test", test, "Popup a vote panel to every player on the server that has not yet voted on this map");
 
 }
 
@@ -195,7 +194,7 @@ public OnSocketError(Handle:socket, const error_type, const error_num, any:heade
         LogError("[MapVotes] Listen Error (errno %d)", error_num);
     } else
     {
-        LogError("[MapVotes] socket error %d (errno %d)", errorType, error_num);
+        LogError("[MapVotes] socket error %d (errno %d)", error_type, error_num);
     }
 
     CloseHandle(headers_pack);
@@ -249,7 +248,12 @@ public HTTPPost(String:base_url[128], String:route[128], String:query_params[512
 
     //This Formats the headers needed to make a HTTP/1.1 POST request.
     new String:request_string[1024];
-    Format(request_string, sizeof(request_string), "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-type: application/x-www-form-urlencoded\r\nContent-length: %d\r\n\r\n%s", route, base_url, strlen(headers), headers);
+    Format(request_string, sizeof(request_string),
+        "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-type: application/x-www-form-urlencoded\r\nContent-length: %d\r\n\r\n%s",
+        route,
+        base_url,
+        strlen(query_params),
+        query_params);
 
     new Handle:headers_pack = CreateDataPack();
     WritePackString(headers_pack, request_string);
@@ -343,15 +347,3 @@ public ServerQuery()
     //TODO
 }
 
-public Action:test(client, args)
-{
-    new Handle:panel = CreateKeyValues("data");
-
-    KvSetString(panel, "title", "MUSIC");
-    KvSetNum(panel, "type", MOTDPANEL_TYPE_URL);
-    KvSetString(panel, "msg", "http://www.thehoodedalliance.com/smdj/index.php?play=122");
-
-    ShowVGUIPanel(client, "info", panel, false);
-    CloseHandle(panel);
-    return;
-}
