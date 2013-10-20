@@ -17,6 +17,9 @@
 #include <base64>
 #include <json>
 
+#undef REQUIRE_EXTENSIONS
+#include <smjansson>
+
 #define PLUGIN_VERSION "0.1"
 
 public Plugin:myinfo = {
@@ -42,6 +45,9 @@ new Handle:g_Cvar_MapVotesApiKey = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesVotingEnabled = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesCommentingEnabled = INVALID_HANDLE;
 
+new bool:g_JanssonEnabled = false;
+
+
 public OnPluginStart()
 {
 
@@ -62,6 +68,23 @@ public OnPluginStart()
 
 }
 
+public OnAllPluginsLoaded() {
+	if (LibraryExists("jansson")) {
+		g_JanssonEnabled = true;
+	}
+}
+
+public OnLibraryAdded(const String:name[]) {
+	if (StrEqual(name, "jansson")) {
+		g_JanssonEnabled = true;
+	}
+}
+
+public OnLibraryRemoved(const String:name[]) {
+	if (StrEqual(name, "jansson")) {
+		g_JanssonEnabled = false;
+	}
+}
 
 public Action:Command_VoteMenu(client, args)
 {
@@ -121,26 +144,23 @@ public Action:Command_CallVote(client, args)
 public OnSocketConnected(Handle:socket, any:headers_pack)
 {
     decl String:request_string[1024];
-    decl String:base_url[128], String:route[128];
 
     ResetPack(headers_pack);
-    new String:headers[1024];
-    ReadPackString(headers_pack, headers, sizeof(headers));
-    ReadPackString(headers_pack, route, sizeof(route));
-    ReadPackString(headers_pack, base_url, sizeof(base_url));
+    ReadPackString(headers_pack, request_string, sizeof(request_string));
 
-
-    //This Formats the headers needed to make a HTTP/1.1 POST request.
-    Format(request_string, sizeof(request_string),
-            "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-type: application/x-www-form-urlencoded\r\nContent-length: %d\r\n\r\n%s",
-            route, base_url, strlen(headers), headers);
-    //PrintToConsole(0,"%s", request_string);//TODO
     SocketSend(socket, request_string);
 }
 
-public OnSocketReceive(Handle:socket, String:receiveData[], const dataSize, any:headers_pack) {
+public OnSocketReceive(Handle:socket, String:receive_data[], const data_size, any:headers_pack) {
+    if(g_JanssonEnabled)
+    {
+        //TODO parse JSON response
+    } else
+    {
+        PrintToConsole(0,"Cannot parse JSON; SMJannson not installed");
+    }
     //Used for data received back
-    PrintToConsole(0,"%s", receiveData);//TODO
+    PrintToConsole(0,"%s", receive_data);//TODO
 }
 
 public OnSocketDisconnected(Handle:socket, any:headers_pack) {
@@ -150,9 +170,34 @@ public OnSocketDisconnected(Handle:socket, any:headers_pack) {
     CloseHandle(socket);
 }
 
-public OnSocketError(Handle:socket, const errorType, const errorNum, any:headers_pack) {
+public OnSocketError(Handle:socket, const error_type, const error_num, any:headers_pack) {
     // a socket error occured
-    LogError("[MapVotes] socket error %d (errno %d)", errorType, errorNum);
+    if(error_type == EMPTY_HOST )
+    {
+        LogError("[MapVotes] Empty Host (errno %d)", error_num);
+    } else if (error_type == NO_HOST )
+    {
+        LogError("[MapVotes] No Host (errno %d)", error_num);
+    } else if (error_type == CONNECT_ERROR )
+    {
+        LogError("[MapVotes] Connection Error (errno %d)", error_num);
+    } else if (error_type == SEND_ERROR )
+    {
+        LogError("[MapVotes] Send Error (errno %d)", error_num);
+    } else if (error_type == BIND_ERROR )
+    {
+        LogError("[MapVotes] Bind Error (errno %d)", error_num);
+    } else if (error_type == RECV_ERROR )
+    {
+        LogError("[MapVotes] Recieve Error (errno %d)", error_num);
+    } else if (error_type == LISTEN_ERROR )
+    {
+        LogError("[MapVotes] Listen Error (errno %d)", error_num);
+    } else
+    {
+        LogError("[MapVotes] socket error %d (errno %d)", errorType, error_num);
+    }
+
     CloseHandle(headers_pack);
     CloseHandle(socket);
 }
@@ -200,13 +245,14 @@ public MapVotesCall(String:route[128], String:query_params[512])
 
 public HTTPPost(String:base_url[128], String:route[128], String:query_params[512], port)
 {
-    new String:host[256];
     new Handle:socket = SocketCreate(SOCKET_TCP, OnSocketError);
 
+    //This Formats the headers needed to make a HTTP/1.1 POST request.
+    new String:request_string[1024];
+    Format(request_string, sizeof(request_string), "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-type: application/x-www-form-urlencoded\r\nContent-length: %d\r\n\r\n%s", route, base_url, strlen(headers), headers);
+
     new Handle:headers_pack = CreateDataPack();
-    WritePackString(headers_pack, query_params);
-    WritePackString(headers_pack, route);
-    WritePackString(headers_pack, base_url);
+    WritePackString(headers_pack, request_string);
     SocketSetArg(socket, headers_pack);
 
     SocketConnect(socket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, base_url, port);
