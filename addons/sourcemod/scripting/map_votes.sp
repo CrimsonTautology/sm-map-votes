@@ -18,7 +18,7 @@
 #include <json>
 
 #undef REQUIRE_EXTENSIONS
-#include <smjansson>
+//#include <smjansson>
 
 #define PLUGIN_VERSION "0.1"
 
@@ -159,7 +159,7 @@ public OnSocketReceive(Handle:socket, String:receive_data[], const data_size, an
         PrintToConsole(0,"Cannot parse JSON; SMJannson not installed");
     }
     //Used for data received back
-    PrintToConsole(0,"%s", receive_data);//TODO
+    //PrintToConsole(0,"%s", receive_data);//TODO
 }
 
 public OnSocketDisconnected(Handle:socket, any:headers_pack) {
