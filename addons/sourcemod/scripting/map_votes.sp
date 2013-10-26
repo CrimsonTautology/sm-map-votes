@@ -177,13 +177,12 @@ public OnSocketReceive(Handle:socket, String:receive_data[], const data_size, an
     if(g_JanssonEnabled)
     {
         //TODO parse JSON response
-        PrintToConsole(0, recieve_data)
     } else
     {
         PrintToConsole(0,"Cannot parse JSON; SMJannson not installed");
     }
     //Used for data received back
-    //PrintToConsole(0,"%s", receive_data);//TODO
+    PrintToConsole(0,"%s", receive_data);//TODO
 }
 
 public OnSocketDisconnected(Handle:socket, any:headers_pack) {
