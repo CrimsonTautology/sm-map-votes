@@ -76,7 +76,7 @@ public OnPluginStart()
 
     RegConsoleCmd("sm_call_vote", Command_CallVote, "Popup a vote panel to every player on the server that has not yet voted on this map");
 
-    RegConsoleCmd("sm_test", Test);
+    RegConsoleCmd("test", Test);
 
 }
 
@@ -187,16 +187,18 @@ public OnSocketReceive(Handle:socket, String:receive_data[], const data_size, an
     if(g_JanssonEnabled)
     {
         //TODO parse JSON response
-        PrintToConsole(0,"{", receive_data);//TODO
+        //PrintToConsole(0,"%s", receive_data);//TODO
 
-        new String:raw[2][1024];
-        ExplodeString(receive_data, "", raw, sizeof(raw), sizeof(raw[]));
-        PrintToChatAll("%s", raw[1]);//TODO
+        new String:raw[2][1024], line[2][1024];
+        ExplodeString(receive_data, "\r\n\r\n", raw, sizeof(raw), sizeof(raw[]));
+        ExplodeString(raw[1], "\r\n", raw, sizeof(line), sizeof(line[]));
 
-        //new Handle:json = json_load(raw[1]);
-        //new String:command[1024];
-        //json_object_get_string(json, "command", command, sizeof(command));
-        //PrintToChatAll("command:%s", command);
+        new Handle:json = json_load(raw[1]);
+        new String:command[1024];
+        json_object_get_string(json, "command", command, sizeof(command));
+        PrintToChatAll("command:%s", command);
+        PrintToConsole(0,"%s", command);//TODO
+
     } else
     {
         PrintToConsole(0,"Cannot parse JSON; SMJannson not installed");
@@ -425,5 +427,12 @@ public ServerQuery()
 
 public Action:Test(client, args)
 {
+    decl String:query_params[512];
+
+    //NOTE: uid is the client's steamid64 while player is the client's userid; the index incremented for each client that joined the server
+    Format(query_params, sizeof(query_params),
+            "player=%i&uid=%s", 7, "76561197998903004");
+
+    MapVotesCall(GET_FAVORITES_ROUTE, query_params);
 }
 
