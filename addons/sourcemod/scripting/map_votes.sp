@@ -338,9 +338,9 @@ public Favorite(client, bool:favorite)
 
     if(favorite)
     {
-        MapVotesCall(UNFAVORITE_ROUTE, query_params);
-    }else{
         MapVotesCall(FAVORITE_ROUTE, query_params);
+    }else{
+        MapVotesCall(UNFAVORITE_ROUTE, query_params);
     }
 }
 
