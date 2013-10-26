@@ -18,7 +18,7 @@
 #include <json>
 
 #undef REQUIRE_EXTENSIONS
-//#include <smjansson>
+#include <smjansson>
 
 #define PLUGIN_VERSION "0.1"
 
