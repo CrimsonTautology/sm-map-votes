@@ -32,6 +32,8 @@ public Plugin:myinfo = {
 
 #define CAST_VOTE_ROUTE "/v1/api/cast_vote"
 #define WRITE_MESSAGE_ROUTE "/v1/api/write_message"
+#define FAVORITE_ROUTE "/v1/api/favorite"
+#define UNFAVORITE_ROUTE "/v1/api/unfavorite"
 #define SERVER_QUERY_ROUTE "/v1/api/server_query"
 #define MAPS_ROUTE "/maps"
 
@@ -60,10 +62,18 @@ public OnPluginStart()
     RegConsoleCmd("sm_vote_menu", Command_VoteMenu, "Bring up a menu to vote on the current map");
     RegConsoleCmd("sm_vote_up", Command_VoteUp, "Vote that you like the current map");
     RegConsoleCmd("sm_vote_down", Command_VoteDown, "Vote that you hate the current map");
+
+    RegConsoleCmd("sm_favorite", Command_Favorite, "Vote that you like the current map");
+    RegConsoleCmd("sm_unfavorite", Command_Unfavorite, "Vote that you hate the current map");
+
     RegConsoleCmd("sm_map_comment", Command_MapComment, "Comment on the current map");
     RegConsoleCmd("sm_mc", Command_MapComment, "Comment on the current map");
+
     RegConsoleCmd("sm_view_map", Command_ViewMap, "View the Map Votes web page for this map");
+
     RegConsoleCmd("sm_call_vote", Command_CallVote, "Popup a vote panel to every player on the server that has not yet voted on this map");
+
+    RegConsoleCmd("sm_test", Test);
 
 }
 
@@ -103,6 +113,19 @@ public Action:Command_VoteDown(client, args)
 {
     if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
         CastVote(client, -1);
+    }
+}
+
+public Action:Command_Favorite(client, args)
+{
+    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
+        Favorite(client, true);
+    }
+}
+public Action:Command_Unfavorite(client, args)
+{
+    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
+        Favorite(client, false);
     }
 }
 
@@ -154,6 +177,7 @@ public OnSocketReceive(Handle:socket, String:receive_data[], const data_size, an
     if(g_JanssonEnabled)
     {
         //TODO parse JSON response
+        PrintToConsole(0, recieve_data)
     } else
     {
         PrintToConsole(0,"Cannot parse JSON; SMJannson not installed");
@@ -301,6 +325,26 @@ public CastVote(client, value)
 
 }
 
+public Favorite(client, bool:favorite)
+{
+    decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
+    GetClientAuthString(client, buffer, sizeof(buffer));
+    GetCommunityIDString(buffer, uid, sizeof(uid));
+    decl String:query_params[512], String:map[128];
+
+    GetCurrentMap(map, sizeof(map));
+
+    Format(query_params, sizeof(query_params),
+            "map=%s&uid=%s", map, uid);
+
+    if(favorite)
+    {
+        MapVotesCall(UNFAVORITE_ROUTE, query_params);
+    }else{
+        MapVotesCall(FAVORITE_ROUTE, query_params);
+    }
+}
+
 public CallVoteOnClient(client)
 {
     new Handle:menu = CreateMenu(VoteMenuHandler);
@@ -345,5 +389,10 @@ public ViewMap(client)
 public ServerQuery()
 {
     //TODO
+}
+
+
+public Action:Test(client, args)
+{
 }
 
