@@ -34,6 +34,7 @@ public Plugin:myinfo = {
 #define WRITE_MESSAGE_ROUTE "/v1/api/write_message"
 #define FAVORITE_ROUTE "/v1/api/favorite"
 #define UNFAVORITE_ROUTE "/v1/api/unfavorite"
+#define GET_FAVORITES_ROUTE "/v1/api/get_favorites"
 #define SERVER_QUERY_ROUTE "/v1/api/server_query"
 #define MAPS_ROUTE "/maps"
 
@@ -63,8 +64,10 @@ public OnPluginStart()
     RegConsoleCmd("sm_vote_up", Command_VoteUp, "Vote that you like the current map");
     RegConsoleCmd("sm_vote_down", Command_VoteDown, "Vote that you hate the current map");
 
-    RegConsoleCmd("sm_favorite", Command_Favorite, "Vote that you like the current map");
-    RegConsoleCmd("sm_unfavorite", Command_Unfavorite, "Vote that you hate the current map");
+    RegConsoleCmd("sm_favorite", Command_Favorite, "Add this map to your favorites");
+    RegConsoleCmd("sm_unfavorite", Command_Unfavorite, "Remove this map to your favorites");
+    RegConsoleCmd("sm_nomfav", Command_GetFavorites, "Nominate from a list of your favorites");
+    RegConsoleCmd("sm_nomfavorites", Command_GetFavorites, "Nominate from a list of your favorites");
 
     RegConsoleCmd("sm_map_comment", Command_MapComment, "Comment on the current map");
     RegConsoleCmd("sm_mc", Command_MapComment, "Comment on the current map");
@@ -128,6 +131,12 @@ public Action:Command_Unfavorite(client, args)
         Favorite(client, false);
     }
 }
+public Action:Command_GetFavorites(client, args)
+{
+    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
+        GetFavorites(client);
+    }
+}
 
 public Action:Command_ViewMap(client, args)
 {
@@ -174,15 +183,24 @@ public OnSocketConnected(Handle:socket, any:headers_pack)
 }
 
 public OnSocketReceive(Handle:socket, String:receive_data[], const data_size, any:headers_pack) {
+    //Used for data received back
     if(g_JanssonEnabled)
     {
         //TODO parse JSON response
+        PrintToConsole(0,"{", receive_data);//TODO
+
+        new String:raw[2][1024];
+        ExplodeString(receive_data, "", raw, sizeof(raw), sizeof(raw[]));
+        PrintToChatAll("%s", raw[1]);//TODO
+
+        //new Handle:json = json_load(raw[1]);
+        //new String:command[1024];
+        //json_object_get_string(json, "command", command, sizeof(command));
+        //PrintToChatAll("command:%s", command);
     } else
     {
         PrintToConsole(0,"Cannot parse JSON; SMJannson not installed");
     }
-    //Used for data received back
-    PrintToConsole(0,"%s", receive_data);//TODO
 }
 
 public OnSocketDisconnected(Handle:socket, any:headers_pack) {
@@ -342,6 +360,20 @@ public Favorite(client, bool:favorite)
     }else{
         MapVotesCall(UNFAVORITE_ROUTE, query_params);
     }
+}
+
+public GetFavorites(client)
+{
+    decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
+    GetClientAuthString(client, buffer, sizeof(buffer));
+    GetCommunityIDString(buffer, uid, sizeof(uid));
+    decl String:query_params[512];
+
+    //NOTE: uid is the client's steamid64 while player is the client's userid; the index incremented for each client that joined the server
+    Format(query_params, sizeof(query_params),
+            "player=%i&uid=%s", GetClientUserId(client), uid);
+
+    MapVotesCall(GET_FAVORITES_ROUTE, query_params);
 }
 
 public CallVoteOnClient(client)
