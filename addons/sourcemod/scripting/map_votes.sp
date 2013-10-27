@@ -189,15 +189,31 @@ public OnSocketReceive(Handle:socket, String:receive_data[], const data_size, an
         //TODO parse JSON response
         //PrintToConsole(0,"%s", receive_data);//TODO
 
-        new String:raw[2][1024], line[2][1024];
+        new String:raw[2][1024], String:line[2][1024];
         ExplodeString(receive_data, "\r\n\r\n", raw, sizeof(raw), sizeof(raw[]));
-        ExplodeString(raw[1], "\r\n", raw, sizeof(line), sizeof(line[]));
+        ExplodeString(raw[1], "\r\n", line, sizeof(line), sizeof(line[]));
+        PrintToConsole(0,"%s", line[1]);//TODO
 
-        new Handle:json = json_load(raw[1]);
+        new Handle:json = json_load(line[1]);
         new String:command[1024];
+        //TODO have way to handle missing value
         json_object_get_string(json, "command", command, sizeof(command));
-        PrintToChatAll("command:%s", command);
         PrintToConsole(0,"%s", command);//TODO
+
+
+        //TODO have integer based commands
+        if(strcmp(command, "get_favorites") == 0)
+        {
+            new player = json_object_get_int(json, "player");
+            new Handle:maps = json_object_get(json, "maps");
+            new String:map_buffer[128];
+
+            for(new i = 0; i < json_array_size(maps); i++)
+            {
+                json_array_get_string(maps, i, map_buffer, sizeof(map_buffer));
+                PrintToChat(GetClientOfUserId(player), "%s", map_buffer);
+            }
+        }
 
     } else
     {
