@@ -192,13 +192,13 @@ public OnSocketReceive(Handle:socket, String:receive_data[], const data_size, an
         new String:raw[2][1024], String:line[2][1024];
         ExplodeString(receive_data, "\r\n\r\n", raw, sizeof(raw), sizeof(raw[]));
         ExplodeString(raw[1], "\r\n", line, sizeof(line), sizeof(line[]));
-        PrintToConsole(0,"%s", line[1]);//TODO
+        //PrintToConsole(0,"%s", line[1]);//TODO
 
         new Handle:json = json_load(line[1]);
         new String:command[1024];
         //TODO have way to handle missing value
         json_object_get_string(json, "command", command, sizeof(command));
-        PrintToConsole(0,"%s", command);//TODO
+        //PrintToConsole(0,"%s", command);//TODO
 
 
         //TODO have integer based commands
