@@ -35,6 +35,7 @@ public Plugin:myinfo = {
 #define FAVORITE_ROUTE "/v1/api/favorite"
 #define UNFAVORITE_ROUTE "/v1/api/unfavorite"
 #define GET_FAVORITES_ROUTE "/v1/api/get_favorites"
+#define HAVE_NOT_VOTED_ROUTE "/v1/api/have_not_voted"
 #define SERVER_QUERY_ROUTE "/v1/api/server_query"
 #define MAPS_ROUTE "/maps"
 
@@ -213,6 +214,10 @@ public OnSocketReceive(Handle:socket, String:receive_data[], const data_size, an
                 json_array_get_string(maps, i, map_buffer, sizeof(map_buffer));
                 PrintToChat(GetClientOfUserId(player), "%s", map_buffer);
             }
+        }
+        if(strcmp(command, "have_not_voted") == 0)
+        {
+            //TODO
         }
 
     } else
