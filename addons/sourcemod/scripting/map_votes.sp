@@ -53,6 +53,9 @@ new g_MapFileSerial = -1;
 new Handle:g_MapList = INVALID_HANDLE;
 new Handle:g_MapTrie = INVALID_HANDLE;
 
+new Handle:g_nominations = INVALID_HANDLE;
+new Function:g_Handler_MapSelectMenu = INVALID_FUNCTION;
+
 new bool:g_JanssonEnabled = false;
 
 
@@ -96,6 +99,17 @@ public OnConfigsExecuted()
 public OnAllPluginsLoaded() {
     if (LibraryExists("jansson")) {
         g_JanssonEnabled = true;
+    }
+
+    g_nominations = FindPluginByFile("nominations.smx");
+
+    //Check if nominations.smx is both available and currently running
+    if(g_nominations == INVALID_HANDLE || GetPluginStatus(g_nominations) != Plugin_Running){
+        SetFailState("[MapVotes] Error, nominations is currently not running");
+    }
+    else{
+        //We should be clear to link the MapSelectMenu function
+        g_Handler_MapSelectMenu = GetFunctionByName(g_nominations, "Handler_MapSelectMenu");
     }
 }
 
@@ -365,7 +379,7 @@ public WriteMessage(client, String:message[256])
     GetClientAuthString(client, buffer, sizeof(buffer));
     GetCommunityIDString(buffer, uid, sizeof(uid));
 
-    decl String:query_params[512], String:map[128];
+    decl String:query_params[512], String:map[PLATFORM_MAX_PATH];
     GetCurrentMap(map, sizeof(map));
     Format(query_params, sizeof(query_params),
             "map=%s&uid=%s&comment=%s&base64=true", map, uid, base64);
@@ -382,7 +396,7 @@ public CastVote(client, value)
     if(!(value == -1 || value == 0 || value == 1)){
         LogError("[MapVotes] invalid vote value %d (steam_user: %s)", value, uid);
     }else{
-        decl String:query_params[512], String:map[128];
+        decl String:query_params[512], String:map[PLATFORM_MAX_PATH];
 
         GetCurrentMap(map, sizeof(map));
 
@@ -399,7 +413,7 @@ public Favorite(client, bool:favorite)
     decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
     GetClientAuthString(client, buffer, sizeof(buffer));
     GetCommunityIDString(buffer, uid, sizeof(uid));
-    decl String:query_params[512], String:map[128];
+    decl String:query_params[512], String:map[PLATFORM_MAX_PATH];
 
     GetCurrentMap(map, sizeof(map));
 
@@ -456,19 +470,22 @@ public ParseGetFavorites(Handle:json)
 
 public NominateMapHandler(Handle:menu, MenuAction:action, param1, param2)
 {
-    if (action == MenuAction_End)
-    {
-        CloseHandle(menu);
-    } else if (action == MenuAction_VoteCancel)
-    {
-    } else if (action == MenuAction_Select)
-    {
-        new String:info[32];
-        GetMenuItem(menu, param2, info, sizeof(info));
-        new value = StringToInt(info);
-        //NominateMap();
 
-    }
+    decl result;
+
+    // Start function call
+    Call_StartFunction(g_nominations, g_Handler_MapSelectMenu);
+
+    // Push parameters one at a time
+    Call_PushCell(menu);
+    Call_PushCell(action);
+    Call_PushCell(param1);
+    Call_PushCell(param2);
+
+    // Finish the call, get the result
+    Call_Finish(result);
+
+    return result;
 }
 
 
@@ -503,7 +520,7 @@ public ParseHaveNotVoted(Handle:json)
 {
     new Handle:players = json_object_get(json, "players");
     new p;
-    new String:map_buffer[128];
+    new String:map_buffer[PLATFORM_MAX_PATH];
 
     for(new i = 0; i < json_array_size(players); i++)
     {
@@ -514,7 +531,7 @@ public ParseHaveNotVoted(Handle:json)
 
 public ViewMap(client)
 {
-    decl String:map[128], String:url[256], String:base_url[128];
+    decl String:map[PLATFORM_MAX_PATH], String:url[256], String:base_url[128];
     GetCurrentMap(map, sizeof(map));
     GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
     ReplaceString(base_url, sizeof(base_url), "http://", "", false);
