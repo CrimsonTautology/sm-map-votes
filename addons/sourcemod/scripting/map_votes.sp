@@ -49,6 +49,10 @@ new Handle:g_Cvar_MapVotesApiKey = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesVotingEnabled = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesCommentingEnabled = INVALID_HANDLE;
 
+new g_MapFileSerial = -1;
+new Handle:g_MapList = INVALID_HANDLE;
+new Handle:g_MapTrie = INVALID_HANDLE;
+
 new bool:g_JanssonEnabled = false;
 
 
@@ -79,24 +83,32 @@ public OnPluginStart()
 
     RegConsoleCmd("test", Test);
 
+    new array_size = ByteCountToCells(PLATFORM_MAX_PATH);        
+    g_MapList = CreateArray(array_size);
+    g_MapTrie = CreateTrie();
+}
+
+public OnConfigsExecuted()
+{
+    BuildMapListAndTrie();
 }
 
 public OnAllPluginsLoaded() {
-	if (LibraryExists("jansson")) {
-		g_JanssonEnabled = true;
-	}
+    if (LibraryExists("jansson")) {
+        g_JanssonEnabled = true;
+    }
 }
 
 public OnLibraryAdded(const String:name[]) {
-	if (StrEqual(name, "jansson")) {
-		g_JanssonEnabled = true;
-	}
+    if (StrEqual(name, "jansson")) {
+        g_JanssonEnabled = true;
+    }
 }
 
 public OnLibraryRemoved(const String:name[]) {
-	if (StrEqual(name, "jansson")) {
-		g_JanssonEnabled = false;
-	}
+    if (StrEqual(name, "jansson")) {
+        g_JanssonEnabled = false;
+    }
 }
 
 public Action:Command_VoteMenu(client, args)
@@ -265,6 +277,31 @@ public OnSocketError(Handle:socket, const error_type, const error_num, any:heade
     CloseHandle(socket);
 }
 
+BuildMapListAndTrie()
+{
+    //Build the map list
+    if (ReadMapList(g_MapList,
+                g_MapFileSerial,
+                "nominations",
+                MAPLIST_FLAG_CLEARARRAY|MAPLIST_FLAG_MAPSFOLDER)
+            == INVALID_HANDLE)
+    {
+        if (g_MapFileSerial == -1)
+        {
+            SetFailState("Unable to create a valid map list.");
+        }else{
+            //Build the map trie; note we don't care about the value, just if the map exists in the trie
+            ClearTrie(g_MapTrie);
+
+            for (new i = 0; i < GetArraySize(g_MapList); i++)
+            {
+                GetArrayString(g_MapList, i, map, sizeof(map));
+                SetTrieValue(g_mapTrie, map, 1);
+            }
+        }
+    }
+}
+
 
 //By 11530
 //GetSteamAccountID(client) does not work because we don't have 64 bit types
@@ -313,11 +350,11 @@ public HTTPPost(String:base_url[128], String:route[128], String:query_params[512
     //This Formats the headers needed to make a HTTP/1.1 POST request.
     new String:request_string[1024];
     Format(request_string, sizeof(request_string),
-        "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-type: application/x-www-form-urlencoded\r\nContent-length: %d\r\n\r\n%s",
-        route,
-        base_url,
-        strlen(query_params),
-        query_params);
+            "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-type: application/x-www-form-urlencoded\r\nContent-length: %d\r\n\r\n%s",
+            route,
+            base_url,
+            strlen(query_params),
+            query_params);
 
     new Handle:headers_pack = CreateDataPack();
     WritePackString(headers_pack, request_string);
@@ -427,16 +464,16 @@ public VoteMenuHandler(Handle:menu, MenuAction:action, param1, param2)
 }
 public ViewMap(client)
 {
-        decl String:map[128], String:url[256], String:base_url[128];
-        GetCurrentMap(map, sizeof(map));
-        GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
-        ReplaceString(base_url, sizeof(base_url), "http://", "", false);
-        ReplaceString(base_url, sizeof(base_url), "https://", "", false);
+    decl String:map[128], String:url[256], String:base_url[128];
+    GetCurrentMap(map, sizeof(map));
+    GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
+    ReplaceString(base_url, sizeof(base_url), "http://", "", false);
+    ReplaceString(base_url, sizeof(base_url), "https://", "", false);
 
-        Format(url, sizeof(url),
-                "http://%s%s/%s", base_url, MAPS_ROUTE, map);
+    Format(url, sizeof(url),
+            "http://%s%s/%s", base_url, MAPS_ROUTE, map);
 
-        ShowMOTDPanel(client, "Map Viewer", url, MOTDPANEL_TYPE_URL);
+    ShowMOTDPanel(client, "Map Viewer", url, MOTDPANEL_TYPE_URL);
 
 }
 
