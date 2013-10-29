@@ -546,8 +546,10 @@ public ParseGetFavorites(Handle:json)
     for(new i = 0; i < json_array_size(maps); i++)
     {
         json_array_get_string(maps, i, map_buffer, sizeof(map_buffer));
-        AddMenuItem(menu, map, map);
-        //PrintToChat(GetClientOfUserId(player), "%s", map_buffer);
+        if(GetTrieValue(g_MapTrie, map, _))
+        {
+            AddMenuItem(menu, map, map);
+        }
     }
 
     //If no maps were found don't even bother displaying a menu
@@ -660,11 +662,6 @@ public ViewMap(client)
 
     ShowMOTDPanel(client, "Map Viewer", url, MOTDPANEL_TYPE_URL);
 
-}
-
-public ServerQuery()
-{
-    //TODO
 }
 
 
