@@ -84,7 +84,7 @@ public OnPluginStart()
 
     RegConsoleCmd("sm_view_map", Command_ViewMap, "View the Map Votes web page for this map");
 
-    RegConsoleCmd("sm_call_vote", Command_CallVote, "Popup a vote panel to every player on the server that has not yet voted on this map");
+    RegAdminCmd("sm_have_not_voted", Command_HaveNotVoted, ADMFLAG_VOTE, "Popup a vote panel to every player on the server that has not yet voted on this map");
 
     RegConsoleCmd("test", Test);
 
@@ -228,9 +228,9 @@ public Action:Command_MapComment(client, args)
     return Plugin_Handled;
 }
 
-public Action:Command_CallVote(client, args)
+public Action:Command_HaveNotVoted(client, args)
 {
-    //TODO
+    HaveNotVoted();
 
     return Plugin_Handled;
 }
@@ -607,6 +607,33 @@ public VoteMenuHandler(Handle:menu, MenuAction:action, param1, param2)
     }
 }
 
+public HaveNotVoted()
+{
+    decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
+    new String:query_buffer[512], String:query_params[512], String:map[PLATFORM_MAX_PATH];
+    new player;
+
+    GetCurrentMap(map, sizeof(map));
+    Format(query_params, sizeof(query_params), "map=%s&", map);
+
+    for (new i=1; i <= MaxClients; i++)
+    {
+        if (!IsClientInGame(i) || IsFakeClient(i))
+        {
+            continue;
+        }
+        GetClientAuthString(client, buffer, sizeof(buffer));
+        GetCommunityIDString(buffer, uid, sizeof(uid));
+        player = GetClientUserId(client);
+
+        Format(query_buffer, sizeof(query_buffer),
+                "&uids=%s&players=%d", uid, value);
+
+        StrCat(query_params, sizeof(query_params), query_buffer);
+    }
+
+    MapVotesCall(HAVE_NOT_VOTED_ROUTE, query_params);
+}
 public ParseHaveNotVoted(Handle:json)
 {
     new Handle:players = json_object_get(json, "players");
