@@ -268,10 +268,12 @@ public OnSocketReceive(Handle:socket, String:receive_data[], const data_size, an
         if(strcmp(command, "get_favorites") == 0)
         {
             ParseGetFavorites(json);
-        }
-        if(strcmp(command, "have_not_voted") == 0)
-        {
+        }else if(strcmp(command, "have_not_voted") == 0){
             ParseHaveNotVoted(json);
+        }else if(strcmp(command, "cast_vote") == 0){
+        }else if(strcmp(command, "write_message") == 0){
+        }else if(strcmp(command, "favorite") == 0){
+        }else if(strcmp(command, "unfavorite") == 0){
         }
 
     } else
