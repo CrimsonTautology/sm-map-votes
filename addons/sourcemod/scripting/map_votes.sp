@@ -133,6 +133,8 @@ public Action:Command_VoteMenu(client, args)
     if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
         CallVoteOnClient(client);
     }
+
+    return Plugin_Handled;
 }
 
 public Action:Command_VoteUp(client, args)
@@ -140,6 +142,8 @@ public Action:Command_VoteUp(client, args)
     if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
         CastVote(client, 1);
     }
+
+    return Plugin_Handled;
 }
 
 public Action:Command_VoteDown(client, args)
@@ -147,6 +151,8 @@ public Action:Command_VoteDown(client, args)
     if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
         CastVote(client, -1);
     }
+
+    return Plugin_Handled;
 }
 
 public Action:Command_Favorite(client, args)
@@ -156,6 +162,8 @@ public Action:Command_Favorite(client, args)
         GetCurrentMap(map, sizeof(map));
         Favorite(map, client, true);
     }
+
+    return Plugin_Handled;
 }
 public Action:Command_Unfavorite(client, args)
 {
@@ -164,12 +172,16 @@ public Action:Command_Unfavorite(client, args)
         GetCurrentMap(map, sizeof(map));
         Favorite(map, client, false);
     }
+
+    return Plugin_Handled;
 }
 public Action:Command_GetFavorites(client, args)
 {
     if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
         GetFavorites(client);
     }
+
+    return Plugin_Handled;
 }
 
 public Action:Command_ViewMap(client, args)
@@ -177,6 +189,8 @@ public Action:Command_ViewMap(client, args)
     if(client && IsClientAuthorized(client)){
         ViewMap(client);
     }
+
+    return Plugin_Handled;
 }
 
 public Action:Command_MapComment(client, args)
@@ -204,6 +218,8 @@ public Action:Command_MapComment(client, args)
 public Action:Command_CallVote(client, args)
 {
     //TODO
+
+    return Plugin_Handled;
 }
 
 public OnSocketConnected(Handle:socket, any:headers_pack)
@@ -433,38 +449,60 @@ public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
     }
 }
 
-public MapSearch(client, String:search_key[PLATFORM_MAX_PATH], Handle:map_list)
+public MapSearch(client, String:search_key[PLATFORM_MAX_PATH], Handle:map_list, MenuHandler:handler)
 {
     new String:map[PLATFORM_MAX_PATH], String:info[16];
-    new Handle:mapSearchedMenu = CreateMenu(nominationSelectMenuHandle, MENU_ACTIONS_DEFAULT|MenuAction_DrawItem|MenuAction_DisplayItem);
+    new Handle:menu = CreateMenu(handler, MENU_ACTIONS_DEFAULT|MenuAction_DrawItem|MenuAction_DisplayItem);
+    new bool:found = false;
 
     for(new i=0; i<GetArraySize(map_list); i++)
     {
         GetArrayString(mapList, i, map, sizeof(map));
 
         //If this map matches the search key, add it to the menu
-        if(StrContains(map, searchKey, false) >= 0){
-            IntToString(i, info, sizeof(info))
-            AddMenuItem(mapSearchedMenu, info, map);
+        if(StrContains(map, search_key, false) >= 0){
+            AddMenuItem(menu, map, map);
+            found = true;
         }
+    }
+
+    if(found)
+    {
+        SetMenuTitle(menu, "Found Maps");
+        DisplayMenu(menu, client, MENU_TIME_FOREVER);
     }
 
 }
 
-public MapSearchHandler(Handle:menu, MenuAction:action, param1, param2)
+public FavoriteSearchHandler(Handle:menu, MenuAction:action, param1, param2)
 {
     if (action == MenuAction_End)
     {
         CloseHandle(menu);
-        return -1;
     } else if (action == MenuAction_VoteCancel)
-        return -1;
     {
     } else if (action == MenuAction_Select)
     {
-        new String:info[32];
+        new client=param1;
+        new String:map[PLATFORM_MAX_PATH];
         GetMenuItem(menu, param2, info, sizeof(info));
-        return StringToInt(info);
+        Favorite(map, client, true);
+    }
+}
+
+public UnfavoriteSearchHandler(Handle:menu, MenuAction:action, param1, param2)
+{
+    if (action == MenuAction_End)
+    {
+        CloseHandle(menu);
+    } else if (action == MenuAction_VoteCancel)
+    {
+    } else if (action == MenuAction_Select)
+    {
+        new client=param1;
+        new String:map[PLATFORM_MAX_PATH];
+        GetMenuItem(menu, param2, info, sizeof(info));
+        Favorite(map, client, false);
     }
 }
 
