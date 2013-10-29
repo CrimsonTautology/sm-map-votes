@@ -431,16 +431,46 @@ public GetFavorites(client)
 public ParseGetFavorites(Handle:json)
 {
     new player = json_object_get_int(json, "player");
+    new client = GetClientOfUserId(player);
+
     new Handle:maps = json_object_get(json, "maps");
     new String:map_buffer[128];
+
+    new Handle:menu = CreateMenu(NominateMapHandler);
 
     for(new i = 0; i < json_array_size(maps); i++)
     {
         json_array_get_string(maps, i, map_buffer, sizeof(map_buffer));
-        PrintToChat(GetClientOfUserId(player), "%s", map_buffer);
+        AddMenuItem(menu, map, map);
+        //PrintToChat(GetClientOfUserId(player), "%s", map_buffer);
     }
 
+    //If no maps were found don't even bother displaying a menu
+    if(GetMenuItemCount(mapSearchedMenu) > 0){
+        SetMenuTitle(menu, "Favorited Maps");
+        DisplayMenu(menu, client, MENU_TIME_FOREVER);
+    }
+
+
 }
+
+public NominateMapHandler(Handle:menu, MenuAction:action, param1, param2)
+{
+    if (action == MenuAction_End)
+    {
+        CloseHandle(menu);
+    } else if (action == MenuAction_VoteCancel)
+    {
+    } else if (action == MenuAction_Select)
+    {
+        new String:info[32];
+        GetMenuItem(menu, param2, info, sizeof(info));
+        new value = StringToInt(info);
+        //NominateMap();
+
+    }
+}
+
 
 public CallVoteOnClient(client)
 {
