@@ -152,13 +152,17 @@ public Action:Command_VoteDown(client, args)
 public Action:Command_Favorite(client, args)
 {
     if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
-        Favorite(client, true);
+        new String:map[PLATFORM_MAX_PATH];
+        GetCurrentMap(map, sizeof(map));
+        Favorite(map, client, true);
     }
 }
 public Action:Command_Unfavorite(client, args)
 {
     if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
-        Favorite(client, false);
+        new String:map[PLATFORM_MAX_PATH];
+        GetCurrentMap(map, sizeof(map));
+        Favorite(map, client, false);
     }
 }
 public Action:Command_GetFavorites(client, args)
@@ -411,14 +415,12 @@ public CastVote(client, value)
 
 }
 
-public Favorite(client, bool:favorite)
+public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
 {
     decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
     GetClientAuthString(client, buffer, sizeof(buffer));
     GetCommunityIDString(buffer, uid, sizeof(uid));
-    decl String:query_params[512], String:map[PLATFORM_MAX_PATH];
-
-    GetCurrentMap(map, sizeof(map));
+    decl String:query_params[512];
 
     Format(query_params, sizeof(query_params),
             "map=%s&uid=%s", map, uid);
@@ -428,6 +430,22 @@ public Favorite(client, bool:favorite)
         MapVotesCall(FAVORITE_ROUTE, query_params);
     }else{
         MapVotesCall(UNFAVORITE_ROUTE, query_params);
+    }
+}
+
+public MapSearchHandler(Handle:menu, MenuAction:action, param1, param2)
+{
+    if (action == MenuAction_End)
+    {
+        CloseHandle(menu);
+    } else if (action == MenuAction_VoteCancel)
+    {
+    } else if (action == MenuAction_Select)
+    {
+        new String:map[PLATFORM_MAX_PATH];
+        GetMenuItem(menu, param2, info, sizeof(info));
+
+        //Favorite(map, param1, value);
     }
 }
 
@@ -451,7 +469,7 @@ public ParseGetFavorites(Handle:json)
     new client = GetClientOfUserId(player);
 
     new Handle:maps = json_object_get(json, "maps");
-    new String:map_buffer[128];
+    new String:map_buffer[PLATFORM_MAX_PATH];
 
     new Handle:menu = CreateMenu(NominateMapHandler);
 
