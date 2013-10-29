@@ -15,7 +15,6 @@
 #include <sourcemod>
 #include <socket>
 #include <base64>
-#include <json>
 
 #undef REQUIRE_EXTENSIONS
 #include <smjansson>
