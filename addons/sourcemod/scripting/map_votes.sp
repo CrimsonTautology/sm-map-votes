@@ -159,8 +159,14 @@ public Action:Command_Favorite(client, args)
 {
     if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
         new String:map[PLATFORM_MAX_PATH];
-        GetCurrentMap(map, sizeof(map));
-        Favorite(map, client, true);
+        if (args <= 0)
+        {
+            GetCurrentMap(map, sizeof(map));
+            Favorite(map, client, true);
+        }else{
+            GetCmdArg(1, map, sizeof(map));
+            MapSearch(client, map, g_MapList, FavoriteSearchHandler);
+        }
     }
 
     return Plugin_Handled;
@@ -169,8 +175,15 @@ public Action:Command_Unfavorite(client, args)
 {
     if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
         new String:map[PLATFORM_MAX_PATH];
-        GetCurrentMap(map, sizeof(map));
-        Favorite(map, client, false);
+        if (args <= 0)
+        {
+            GetCurrentMap(map, sizeof(map));
+            Favorite(map, client, false);
+        }else{
+            GetCmdArg(1, map, sizeof(map));
+            MapSearch(client, map, g_MapList, UnfavoriteSearchHandler);
+        }
+
     }
 
     return Plugin_Handled;
