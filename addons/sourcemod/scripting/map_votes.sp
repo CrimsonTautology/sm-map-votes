@@ -433,19 +433,38 @@ public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
     }
 }
 
+public MapSearch(client, String:search_key[PLATFORM_MAX_PATH], Handle:map_list)
+{
+    new String:map[PLATFORM_MAX_PATH], String:info[16];
+    new Handle:mapSearchedMenu = CreateMenu(nominationSelectMenuHandle, MENU_ACTIONS_DEFAULT|MenuAction_DrawItem|MenuAction_DisplayItem);
+
+    for(new i=0; i<GetArraySize(map_list); i++)
+    {
+        GetArrayString(mapList, i, map, sizeof(map));
+
+        //If this map matches the search key, add it to the menu
+        if(StrContains(map, searchKey, false) >= 0){
+            IntToString(i, info, sizeof(info))
+            AddMenuItem(mapSearchedMenu, info, map);
+        }
+    }
+
+}
+
 public MapSearchHandler(Handle:menu, MenuAction:action, param1, param2)
 {
     if (action == MenuAction_End)
     {
         CloseHandle(menu);
+        return -1;
     } else if (action == MenuAction_VoteCancel)
+        return -1;
     {
     } else if (action == MenuAction_Select)
     {
-        new String:map[PLATFORM_MAX_PATH];
+        new String:info[32];
         GetMenuItem(menu, param2, info, sizeof(info));
-
-        //Favorite(map, param1, value);
+        return StringToInt(info);
     }
 }
 
