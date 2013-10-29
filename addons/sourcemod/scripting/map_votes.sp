@@ -48,6 +48,7 @@ new Handle:g_Cvar_MapVotesPort = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesApiKey = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesVotingEnabled = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesCommentingEnabled = INVALID_HANDLE;
+new Handle:g_Cvar_MapVotesNominationsName = INVALID_HANDLE;
 
 new g_MapFileSerial = -1;
 new Handle:g_MapList = INVALID_HANDLE;
@@ -67,6 +68,7 @@ public OnPluginStart()
     g_Cvar_MapVotesApiKey = CreateConVar("sm_map_votes_api_key", "", "The API key you generated to interact with the Map Votes web page");
     g_Cvar_MapVotesVotingEnabled = CreateConVar("sm_map_votes_voting_enabled", "1", "Whether players are allowed to vote on the current map");
     g_Cvar_MapVotesCommentingEnabled = CreateConVar("sm_map_votes_commenting_enabled", "1", "Whether players are allowed to comment on the current map");
+    g_Cvar_MapVotesNominationsName = CreateConVar("sm_map_votes_nominations_plugin", "nominations.smx", "The nominations plugin used by the server");
 
     RegConsoleCmd("sm_vote_menu", Command_VoteMenu, "Bring up a menu to vote on the current map");
     RegConsoleCmd("sm_vote_up", Command_VoteUp, "Vote that you like the current map");
@@ -101,7 +103,8 @@ public OnAllPluginsLoaded() {
         g_JanssonEnabled = true;
     }
 
-    g_nominations = FindPluginByFile("nominations.smx");
+    new noms = GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
+    g_nominations = FindPluginByFile(noms);
 
     //Check if nominations.smx is both available and currently running
     if(g_nominations == INVALID_HANDLE || GetPluginStatus(g_nominations) != Plugin_Running){
