@@ -217,19 +217,11 @@ public OnSocketReceive(Handle:socket, String:receive_data[], const data_size, an
         //TODO have integer based commands
         if(strcmp(command, "get_favorites") == 0)
         {
-            new player = json_object_get_int(json, "player");
-            new Handle:maps = json_object_get(json, "maps");
-            new String:map_buffer[128];
-
-            for(new i = 0; i < json_array_size(maps); i++)
-            {
-                json_array_get_string(maps, i, map_buffer, sizeof(map_buffer));
-                PrintToChat(GetClientOfUserId(player), "%s", map_buffer);
-            }
+            ParseGetFavorites(json);
         }
         if(strcmp(command, "have_not_voted") == 0)
         {
-            //TODO
+            ParseHaveNotVoted(json);
         }
 
     } else
@@ -436,6 +428,20 @@ public GetFavorites(client)
     MapVotesCall(GET_FAVORITES_ROUTE, query_params);
 }
 
+public ParseGetFavorites(Handle:json)
+{
+    new player = json_object_get_int(json, "player");
+    new Handle:maps = json_object_get(json, "maps");
+    new String:map_buffer[128];
+
+    for(new i = 0; i < json_array_size(maps); i++)
+    {
+        json_array_get_string(maps, i, map_buffer, sizeof(map_buffer));
+        PrintToChat(GetClientOfUserId(player), "%s", map_buffer);
+    }
+
+}
+
 public CallVoteOnClient(client)
 {
     new Handle:menu = CreateMenu(VoteMenuHandler);
@@ -462,6 +468,20 @@ public VoteMenuHandler(Handle:menu, MenuAction:action, param1, param2)
         CastVote(param1, value);
     }
 }
+
+public ParseHaveNotVoted(Handle:json)
+{
+    new Handle:players = json_object_get(json, "players");
+    new p;
+    new String:map_buffer[128];
+
+    for(new i = 0; i < json_array_size(players); i++)
+    {
+        p = json_array_get_int(players, i);
+        CallVoteOnClient(GetClientOfUserId(p))
+    }
+}
+
 public ViewMap(client)
 {
     decl String:map[128], String:url[256], String:base_url[128];
