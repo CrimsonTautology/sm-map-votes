@@ -690,10 +690,12 @@ public HaveNotVoted()
         StrCat(query_params, sizeof(query_params), query_buffer);
     }
 
-    MapVotesCall(HAVE_NOT_VOTED_ROUTE, query_params, 0, OnSocketReceive);
+    MapVotesCall(HAVE_NOT_VOTED_ROUTE, query_params, 0, ReceiveHaveNotVoted);
 }
-public ParseHaveNotVoted(Handle:json)
+
+public ReceiveHaveNotVoted(Handle:socket, String:receive_data[], const data_size, any:headers_pack)
 {
+    new Handle:json = ParseJson(receive_data);
     new Handle:players = json_object_get(json, "players");
     new p;
     new String:map_buffer[PLATFORM_MAX_PATH];
