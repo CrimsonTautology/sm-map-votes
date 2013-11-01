@@ -266,10 +266,7 @@ public OnSocketReceive(Handle:socket, String:receive_data[], const data_size, an
 
 
         //TODO have integer based commands
-        if(strcmp(command, "get_favorites") == 0)
-        {
-            ParseGetFavorites(json);
-        }else if(strcmp(command, "have_not_voted") == 0){
+        if(strcmp(command, "have_not_voted") == 0){
             ParseHaveNotVoted(json);
         }else if(strcmp(command, "cast_vote") == 0){
         }else if(strcmp(command, "write_message") == 0){
@@ -416,6 +413,17 @@ public HTTPPost(String:base_url[128], String:route[128], String:query_params[512
 
     SocketConnect(socket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, base_url, port);
 }
+
+//Parse an http post response to strip out the header and byte counts to get the json string
+public Handle:ParseJson(String:receive_data[])
+{
+    new String:raw[2][1024], String:line[2][1024];
+    ExplodeString(receive_data, "\r\n\r\n", raw, sizeof(raw), sizeof(raw[]));
+    ExplodeString(raw[1], "\r\n", line, sizeof(line), sizeof(line[]));
+
+    return json_load(line[1]);
+}
+
 public WriteMessage(client, String:message[256])
 {
     //Encode the message to be url safe
@@ -468,11 +476,23 @@ public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
 
     if(favorite)
     {
-        MapVotesCall(FAVORITE_ROUTE, query_params, client, OnSocketReceive);
+        MapVotesCall(FAVORITE_ROUTE, query_params, client, ReceiveFavorite);
     }else{
-        MapVotesCall(UNFAVORITE_ROUTE, query_params, client, OnSocketReceive);
+        MapVotesCall(UNFAVORITE_ROUTE, query_params, client, ReceiveFavorite);
     }
 }
+
+public ReceiveFavorite(Handle:socket, String:receive_data[], const data_size, any:headers_pack)
+{
+    ResetPack(headers_pack);
+    decl client = GetClientOfUserId(ReadPackCell(headers_pack));
+
+    if(client)
+    {
+        PrintToChat(client, "[MapVotes] Updated Favorites");
+    }
+}
+
 
 public MapSearch(client, String:search_key[PLATFORM_MAX_PATH], Handle:map_list, MenuHandler:handler)
 {
@@ -542,25 +562,15 @@ public GetFavorites(client)
     Format(query_params, sizeof(query_params),
             "player=%i&uid=%s", GetClientUserId(client), uid);
 
-    MapVotesCall(GET_FAVORITES_ROUTE, query_params, client, OnSocketReceive);
+    MapVotesCall(GET_FAVORITES_ROUTE, query_params, client, ReceiveGetFavorites);
 }
 
-public Handle:ParseJson(String:receive_data[])
-{
-    new String:raw[2][1024], String:line[2][1024];
-    ExplodeString(receive_data, "\r\n\r\n", raw, sizeof(raw), sizeof(raw[]));
-    ExplodeString(raw[1], "\r\n", line, sizeof(line), sizeof(line[]));
-
-    return json_load(line[1]);
-}
 public ReceiveGetFavorites(Handle:socket, String:receive_data[], const data_size, any:headers_pack)
 {
-    new Handle:json = ParseJson(receive_data);
     ResetPack(headers_pack);
     decl client = GetClientOfUserId(ReadPackCell(headers_pack));
-    new player = json_object_get_int(json, "player");
-    new client = GetClientOfUserId(player);
 
+    new Handle:json = ParseJson(receive_data);
     new Handle:maps = json_object_get(json, "maps");
     new String:map_buffer[PLATFORM_MAX_PATH];
 
@@ -579,38 +589,11 @@ public ReceiveGetFavorites(Handle:socket, String:receive_data[], const data_size
     if(GetMenuItemCount(mapSearchedMenu) > 0){
         SetMenuTitle(menu, "Favorited Maps");
         DisplayMenu(menu, client, MENU_TIME_FOREVER);
+    }else{
+        PrintToChat(client, "[MapVotes] You have no favorited maps that are on this server.")
     }
-
-
 }
 
-public ParseGetFavorites(Handle:json)
-{
-    new player = json_object_get_int(json, "player");
-    new client = GetClientOfUserId(player);
-
-    new Handle:maps = json_object_get(json, "maps");
-    new String:map_buffer[PLATFORM_MAX_PATH];
-
-    new Handle:menu = CreateMenu(NominateMapHandler);
-
-    for(new i = 0; i < json_array_size(maps); i++)
-    {
-        json_array_get_string(maps, i, map_buffer, sizeof(map_buffer));
-        if(GetTrieValue(g_MapTrie, map, _))
-        {
-            AddMenuItem(menu, map, map);
-        }
-    }
-
-    //If no maps were found don't even bother displaying a menu
-    if(GetMenuItemCount(mapSearchedMenu) > 0){
-        SetMenuTitle(menu, "Favorited Maps");
-        DisplayMenu(menu, client, MENU_TIME_FOREVER);
-    }
-
-
-}
 
 public NominateMapHandler(Handle:menu, MenuAction:action, param1, param2)
 {
