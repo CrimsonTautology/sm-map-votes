@@ -15,8 +15,6 @@
 #include <sourcemod>
 #include <socket>
 #include <base64>
-
-#undef REQUIRE_EXTENSIONS
 #include <smjansson>
 
 #define PLUGIN_VERSION "0.1"
@@ -55,8 +53,6 @@ new Handle:g_MapTrie = INVALID_HANDLE;
 
 new Handle:g_nominations = INVALID_HANDLE;
 new Function:g_Handler_MapSelectMenu = INVALID_FUNCTION;
-
-new bool:g_JanssonEnabled = false;
 
 
 public OnPluginStart()
@@ -99,10 +95,6 @@ public OnConfigsExecuted()
 }
 
 public OnAllPluginsLoaded() {
-    if (LibraryExists("jansson")) {
-        g_JanssonEnabled = true;
-    }
-
     new noms = GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
     g_nominations = FindPluginByFile(noms);
 
@@ -113,18 +105,6 @@ public OnAllPluginsLoaded() {
     else{
         //We should be clear to link the MapSelectMenu function
         g_Handler_MapSelectMenu = GetFunctionByName(g_nominations, "Handler_MapSelectMenu");
-    }
-}
-
-public OnLibraryAdded(const String:name[]) {
-    if (StrEqual(name, "jansson")) {
-        g_JanssonEnabled = true;
-    }
-}
-
-public OnLibraryRemoved(const String:name[]) {
-    if (StrEqual(name, "jansson")) {
-        g_JanssonEnabled = false;
     }
 }
 
@@ -244,40 +224,6 @@ public OnSocketConnected(Handle:socket, any:headers_pack)
     ReadPackString(headers_pack, request_string, sizeof(request_string));
 
     SocketSend(socket, request_string);
-}
-
-public OnSocketReceive(Handle:socket, String:receive_data[], const data_size, any:headers_pack) {
-    //Used for data received back
-    if(g_JanssonEnabled)
-    {
-        //TODO parse JSON response
-        //PrintToConsole(0,"%s", receive_data);//TODO
-
-        new String:raw[2][1024], String:line[2][1024];
-        ExplodeString(receive_data, "\r\n\r\n", raw, sizeof(raw), sizeof(raw[]));
-        ExplodeString(raw[1], "\r\n", line, sizeof(line), sizeof(line[]));
-        //PrintToConsole(0,"%s", line[1]);//TODO
-
-        new Handle:json = json_load(line[1]);
-        new String:command[1024];
-        //TODO have way to handle missing value
-        json_object_get_string(json, "command", command, sizeof(command));
-        //PrintToConsole(0,"%s", command);//TODO
-
-
-        //TODO have integer based commands
-        if(strcmp(command, "have_not_voted") == 0){
-            ParseHaveNotVoted(json);
-        }else if(strcmp(command, "cast_vote") == 0){
-        }else if(strcmp(command, "write_message") == 0){
-        }else if(strcmp(command, "favorite") == 0){
-        }else if(strcmp(command, "unfavorite") == 0){
-        }
-
-    } else
-    {
-        PrintToConsole(0,"Cannot parse JSON; SMJannson not installed");
-    }
 }
 
 public OnSocketDisconnected(Handle:socket, any:headers_pack) {
@@ -411,7 +357,7 @@ public HTTPPost(String:base_url[128], String:route[128], String:query_params[512
     WritePackString(headers_pack, request_string);
     SocketSetArg(socket, headers_pack);
 
-    SocketConnect(socket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, base_url, port);
+    SocketConnect(socket, OnSocketConnected, rfunc, OnSocketDisconnected, base_url, port);
 }
 
 //Parse an http post response to strip out the header and byte counts to get the json string
@@ -731,6 +677,6 @@ public Action:Test(client, args)
     Format(query_params, sizeof(query_params),
             "player=%i&uid=%s", 7, "76561197998903004");
 
-    MapVotesCall(GET_FAVORITES_ROUTE, query_params, 0, OnSocketReceive);
+    MapVotesCall(GET_FAVORITES_ROUTE, query_params, 0, ReceiveGetFavorites);
 }
 
