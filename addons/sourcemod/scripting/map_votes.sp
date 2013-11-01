@@ -240,6 +240,7 @@ public OnSocketConnected(Handle:socket, any:headers_pack)
     decl String:request_string[1024];
 
     ResetPack(headers_pack);
+    ReadPackCell(headers_pack);
     ReadPackString(headers_pack, request_string, sizeof(request_string));
 
     SocketSend(socket, request_string);
@@ -291,6 +292,9 @@ public OnSocketDisconnected(Handle:socket, any:headers_pack) {
 
 public OnSocketError(Handle:socket, const error_type, const error_num, any:headers_pack) {
     // a socket error occured
+    ResetPack(headers_pack);
+    decl client = GetClientOfUserId(ReadPackCell(headers_pack));
+
     if(error_type == EMPTY_HOST )
     {
         LogError("[MapVotes] Empty Host (errno %d)", error_num);
@@ -315,6 +319,11 @@ public OnSocketError(Handle:socket, const error_type, const error_num, any:heade
     } else
     {
         LogError("[MapVotes] socket error %d (errno %d)", error_type, error_num);
+    }
+
+    if(client)
+    {
+        PrintToChat(client, "[MapVotes] socket error %d (errno %d)", error_type, error_num);
     }
 
     CloseHandle(headers_pack);
@@ -401,8 +410,8 @@ public HTTPPost(String:base_url[128], String:route[128], String:query_params[512
             query_params);
 
     new Handle:headers_pack = CreateDataPack();
-    WritePackString(headers_pack, request_string);
     WritePackCell(headers_pack, GetClientUserId(client));
+    WritePackString(headers_pack, request_string);
     SocketSetArg(socket, headers_pack);
 
     SocketConnect(socket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, base_url, port);
@@ -534,6 +543,45 @@ public GetFavorites(client)
             "player=%i&uid=%s", GetClientUserId(client), uid);
 
     MapVotesCall(GET_FAVORITES_ROUTE, query_params, client, OnSocketReceive);
+}
+
+public Handle:ParseJson(String:receive_data[])
+{
+    new String:raw[2][1024], String:line[2][1024];
+    ExplodeString(receive_data, "\r\n\r\n", raw, sizeof(raw), sizeof(raw[]));
+    ExplodeString(raw[1], "\r\n", line, sizeof(line), sizeof(line[]));
+
+    return json_load(line[1]);
+}
+public ReceiveGetFavorites(Handle:socket, String:receive_data[], const data_size, any:headers_pack)
+{
+    new Handle:json = ParseJson(receive_data);
+    ResetPack(headers_pack);
+    decl client = GetClientOfUserId(ReadPackCell(headers_pack));
+    new player = json_object_get_int(json, "player");
+    new client = GetClientOfUserId(player);
+
+    new Handle:maps = json_object_get(json, "maps");
+    new String:map_buffer[PLATFORM_MAX_PATH];
+
+    new Handle:menu = CreateMenu(NominateMapHandler);
+
+    for(new i = 0; i < json_array_size(maps); i++)
+    {
+        json_array_get_string(maps, i, map_buffer, sizeof(map_buffer));
+        if(GetTrieValue(g_MapTrie, map, _))
+        {
+            AddMenuItem(menu, map, map);
+        }
+    }
+
+    //If no maps were found don't even bother displaying a menu
+    if(GetMenuItemCount(mapSearchedMenu) > 0){
+        SetMenuTitle(menu, "Favorited Maps");
+        DisplayMenu(menu, client, MENU_TIME_FOREVER);
+    }
+
+
 }
 
 public ParseGetFavorites(Handle:json)
