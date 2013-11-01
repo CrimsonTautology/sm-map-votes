@@ -372,7 +372,7 @@ stock bool:GetCommunityIDString(const String:SteamID[], String:CommunityID[], co
     return true; 
 }  
 
-public MapVotesCall(String:route[128], String:query_params[512])
+public MapVotesCall(String:route[128], String:query_params[512], client, SocketReceiveCB:rfunc)
 {
     new port= GetConVarInt(g_Cvar_MapVotesPort);
     decl String:base_url[128], String:api_key[128];
@@ -384,10 +384,10 @@ public MapVotesCall(String:route[128], String:query_params[512])
 
     Format(query_params, sizeof(query_params), "%s&access_token=%s", query_params, api_key);
 
-    HTTPPost(base_url, route, query_params, port);
+    HTTPPost(base_url, route, query_params, port, client, rfunc);
 }
 
-public HTTPPost(String:base_url[128], String:route[128], String:query_params[512], port)
+public HTTPPost(String:base_url[128], String:route[128], String:query_params[512], port, client, SocketReceiveCB:rfunc)
 {
     new Handle:socket = SocketCreate(SOCKET_TCP, OnSocketError);
 
@@ -402,6 +402,7 @@ public HTTPPost(String:base_url[128], String:route[128], String:query_params[512
 
     new Handle:headers_pack = CreateDataPack();
     WritePackString(headers_pack, request_string);
+    WritePackCell(headers_pack, GetClientUserId(client));
     SocketSetArg(socket, headers_pack);
 
     SocketConnect(socket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, base_url, port);
@@ -422,7 +423,7 @@ public WriteMessage(client, String:message[256])
     Format(query_params, sizeof(query_params),
             "map=%s&uid=%s&comment=%s&base64=true", map, uid, base64);
 
-    MapVotesCall(WRITE_MESSAGE_ROUTE, query_params);
+    MapVotesCall(WRITE_MESSAGE_ROUTE, query_params, client, OnSocketReceive);
 }
 
 public CastVote(client, value)
@@ -441,7 +442,7 @@ public CastVote(client, value)
         Format(query_params, sizeof(query_params),
                 "map=%s&uid=%s&value=%d", map, uid, value);
 
-        MapVotesCall(CAST_VOTE_ROUTE, query_params);
+        MapVotesCall(CAST_VOTE_ROUTE, query_params, client, OnSocketReceive);
     }
 
 }
@@ -458,9 +459,9 @@ public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
 
     if(favorite)
     {
-        MapVotesCall(FAVORITE_ROUTE, query_params);
+        MapVotesCall(FAVORITE_ROUTE, query_params, client, OnSocketReceive);
     }else{
-        MapVotesCall(UNFAVORITE_ROUTE, query_params);
+        MapVotesCall(UNFAVORITE_ROUTE, query_params, client, OnSocketReceive);
     }
 }
 
@@ -532,7 +533,7 @@ public GetFavorites(client)
     Format(query_params, sizeof(query_params),
             "player=%i&uid=%s", GetClientUserId(client), uid);
 
-    MapVotesCall(GET_FAVORITES_ROUTE, query_params);
+    MapVotesCall(GET_FAVORITES_ROUTE, query_params, client, OnSocketReceive);
 }
 
 public ParseGetFavorites(Handle:json)
@@ -636,7 +637,7 @@ public HaveNotVoted()
         StrCat(query_params, sizeof(query_params), query_buffer);
     }
 
-    MapVotesCall(HAVE_NOT_VOTED_ROUTE, query_params);
+    MapVotesCall(HAVE_NOT_VOTED_ROUTE, query_params, 0, OnSocketReceive);
 }
 public ParseHaveNotVoted(Handle:json)
 {
@@ -675,6 +676,6 @@ public Action:Test(client, args)
     Format(query_params, sizeof(query_params),
             "player=%i&uid=%s", 7, "76561197998903004");
 
-    MapVotesCall(GET_FAVORITES_ROUTE, query_params);
+    MapVotesCall(GET_FAVORITES_ROUTE, query_params, 0, OnSocketReceive);
 }
 
