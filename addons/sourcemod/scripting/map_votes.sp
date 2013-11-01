@@ -440,7 +440,18 @@ public WriteMessage(client, String:message[256])
     Format(query_params, sizeof(query_params),
             "map=%s&uid=%s&comment=%s&base64=true", map, uid, base64);
 
-    MapVotesCall(WRITE_MESSAGE_ROUTE, query_params, client, OnSocketReceive);
+    MapVotesCall(WRITE_MESSAGE_ROUTE, query_params, client, ReceiveWriteMessage);
+}
+
+public ReceiveWriteMessage(Handle:socket, String:receive_data[], const data_size, any:headers_pack)
+{
+    ResetPack(headers_pack);
+    decl client = GetClientOfUserId(ReadPackCell(headers_pack));
+
+    if(client)
+    {
+        PrintToChat(client, "[MapVotes] Comment Added");
+    }
 }
 
 public CastVote(client, value)
@@ -459,9 +470,20 @@ public CastVote(client, value)
         Format(query_params, sizeof(query_params),
                 "map=%s&uid=%s&value=%d", map, uid, value);
 
-        MapVotesCall(CAST_VOTE_ROUTE, query_params, client, OnSocketReceive);
+        MapVotesCall(CAST_VOTE_ROUTE, query_params, client, ReceiveCastVote);
     }
 
+}
+
+public ReceiveCastVote(Handle:socket, String:receive_data[], const data_size, any:headers_pack)
+{
+    ResetPack(headers_pack);
+    decl client = GetClientOfUserId(ReadPackCell(headers_pack));
+
+    if(client)
+    {
+        PrintToChat(client, "[MapVotes] Vote Cast");
+    }
 }
 
 public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
