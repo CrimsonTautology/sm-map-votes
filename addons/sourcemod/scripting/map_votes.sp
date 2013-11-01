@@ -69,19 +69,20 @@ public OnPluginStart()
     g_Cvar_MapVotesCommentingEnabled = CreateConVar("sm_map_votes_commenting_enabled", "1", "Whether players are allowed to comment on the current map");
     g_Cvar_MapVotesNominationsName = CreateConVar("sm_map_votes_nominations_plugin", "nominations.smx", "The nominations plugin used by the server");
 
-    RegConsoleCmd("sm_vote_menu", Command_VoteMenu, "Bring up a menu to vote on the current map");
-    RegConsoleCmd("sm_vote_up", Command_VoteUp, "Vote that you like the current map");
-    RegConsoleCmd("sm_vote_down", Command_VoteDown, "Vote that you hate the current map");
+    RegConsoleCmd("sm_votemenu", Command_VoteMenu, "Bring up a menu to vote on the current map");
+    RegConsoleCmd("sm_voteup", Command_VoteUp, "Vote that you like the current map");
+    RegConsoleCmd("sm_like", Command_VoteUp, "Vote that you like the current map");
+    RegConsoleCmd("sm_votedown", Command_VoteDown, "Vote that you hate the current map");
+    RegConsoleCmd("sm_hate", Command_VoteDown, "Vote that you hate the current map");
 
-    RegConsoleCmd("sm_favorite", Command_Favorite, "Add this map to your favorites");
-    RegConsoleCmd("sm_unfavorite", Command_Unfavorite, "Remove this map to your favorites");
+    RegConsoleCmd("sm_fav", Command_Favorite, "Add this map to your favorites");
+    RegConsoleCmd("sm_unfav", Command_Unfavorite, "Remove this map to your favorites");
     RegConsoleCmd("sm_nomfav", Command_GetFavorites, "Nominate from a list of your favorites");
-    RegConsoleCmd("sm_nomfavorites", Command_GetFavorites, "Nominate from a list of your favorites");
 
-    RegConsoleCmd("sm_map_comment", Command_MapComment, "Comment on the current map");
+    RegConsoleCmd("sm_mapcomment", Command_MapComment, "Comment on the current map");
     RegConsoleCmd("sm_mc", Command_MapComment, "Comment on the current map");
 
-    RegConsoleCmd("sm_view_map", Command_ViewMap, "View the Map Votes web page for this map");
+    RegConsoleCmd("sm_viewmap", Command_ViewMap, "View the Map Votes web page for this map");
 
     RegAdminCmd("sm_have_not_voted", Command_HaveNotVoted, ADMFLAG_VOTE, "Popup a vote panel to every player on the server that has not yet voted on this map");
 

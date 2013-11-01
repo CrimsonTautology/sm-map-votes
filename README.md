@@ -16,20 +16,37 @@ Generate an api key through the Map Votes webpage.
 Set the `sm_map_votes_api_key` cvar to the Api Key you just generated.
 Set the `sm_map_votes_url` cvar to the URL of your Map Votes webpage.
 
+CVARs:
+------
+- `sm_map_votes_url` URL to your Map Votes web page
+- `sm_map_votes_api_key` The API key you generated to interact with the Map Votes web page
+- `sm_map_votes_voting_enabled` Whether players are allowed to vote on the current map
+    Default `1`
+- `sm_map_votes_commenting_enabled` Whether players are allowed to comment on the current map
+    Default `1`
+- `sm_map_votes_nominations_plugin` The nominations plugin used by the server
+    Defaults to `"nominations.smx"`
+
+
 
 USAGE:
 ------
-`sm_vote_menu`      Vote that you like the current map
-`sm_vote_up`        Vote that you like the current map
-`sm_vote_down`      Vote that you hate the current map
-`sm_map_comment`    Comment on the current map
-`sm_mc`             Comment on the current map
-`sm_view_map`       View the Map Votes web page for this map
-`sm_call_vote`      Popup a vote panel to every player on the server that has not yet voted on this map
+`!votemenu` Vote that you like the current map
+`!voteup`, `!like` Vote that you like the current map
+`!votedown`,`!hate` Vote that you hate the current map
+
+`!fav [map]` Search for `"map"` and add it to your favorites.  Deafults to current `"map"` if map is not given.
+`!unfav [map]` Search for `"map"` and remove it to your favorites.  Deafults to current `"map"` if map is not given.
+`!nomfav [map]` Nominate for the next map vote from a list of your favorites
+
+`!mapcomment <message>`, `!mc <message>` Comment on the current map
+`!viewmap` View the Map Votes web page for this map
+
+`!have_not_voted` (Admin Command)Popup a vote panel to every player on the server that has not yet voted on this map
 
 OTHER:
 ------
 [Code for getting SteamId64s](http://forums.alliedmods.net/showthread.php?t=183443)
 [Base64 Library](http://forums.alliedmods.net/showthread.php?t=101764)
-[JSON Library](https://github.com/nikkiii/logupload/blob/master/scripting/include/json.inc)
-
+[SMJansson](https://github.com/thraaawn/SMJansson)
+[Sockets](http://forums.alliedmods.net/showthread.php?t=67640)
