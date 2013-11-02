@@ -95,8 +95,10 @@ public OnConfigsExecuted()
 }
 
 public OnAllPluginsLoaded() {
-    new noms = GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
-    g_nominations = FindPluginByFile(noms);
+    new String:noms[PLATFORM_MAX_PATH];
+    GetConVarString(g_Cvar_MapVotesNominationsName, noms, sizeof(noms));
+    //g_nominations = FindPluginByFile(noms);
+    g_nominations = FindPluginByFile("nominations.smx");
 
     //Check if nominations.smx is both available and currently running
     if(g_nominations == INVALID_HANDLE || GetPluginStatus(g_nominations) != Plugin_Running){
@@ -236,7 +238,7 @@ public OnSocketDisconnected(Handle:socket, any:headers_pack) {
 public OnSocketError(Handle:socket, const error_type, const error_num, any:headers_pack) {
     // a socket error occured
     ResetPack(headers_pack);
-    decl client = GetClientOfUserId(ReadPackCell(headers_pack));
+    new client = GetClientOfUserId(ReadPackCell(headers_pack));
 
     if(error_type == EMPTY_HOST )
     {
@@ -288,11 +290,12 @@ BuildMapListAndTrie()
         }else{
             //Build the map trie; note we don't care about the value, just if the map exists in the trie
             ClearTrie(g_MapTrie);
+            new String:map[PLATFORM_MAX_PATH];
 
             for (new i = 0; i < GetArraySize(g_MapList); i++)
             {
                 GetArrayString(g_MapList, i, map, sizeof(map));
-                SetTrieValue(g_mapTrie, map, 1);
+                SetTrieValue(g_MapTrie, map, 1);
             }
         }
     }
@@ -392,7 +395,7 @@ public WriteMessage(client, String:message[256])
 public ReceiveWriteMessage(Handle:socket, String:receive_data[], const data_size, any:headers_pack)
 {
     ResetPack(headers_pack);
-    decl client = GetClientOfUserId(ReadPackCell(headers_pack));
+    new client = GetClientOfUserId(ReadPackCell(headers_pack));
 
     if(client)
     {
@@ -424,7 +427,7 @@ public CastVote(client, value)
 public ReceiveCastVote(Handle:socket, String:receive_data[], const data_size, any:headers_pack)
 {
     ResetPack(headers_pack);
-    decl client = GetClientOfUserId(ReadPackCell(headers_pack));
+    new client = GetClientOfUserId(ReadPackCell(headers_pack));
 
     if(client)
     {
@@ -453,7 +456,7 @@ public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
 public ReceiveFavorite(Handle:socket, String:receive_data[], const data_size, any:headers_pack)
 {
     ResetPack(headers_pack);
-    decl client = GetClientOfUserId(ReadPackCell(headers_pack));
+    new client = GetClientOfUserId(ReadPackCell(headers_pack));
 
     if(client)
     {
@@ -470,7 +473,7 @@ public MapSearch(client, String:search_key[PLATFORM_MAX_PATH], Handle:map_list, 
 
     for(new i=0; i<GetArraySize(map_list); i++)
     {
-        GetArrayString(mapList, i, map, sizeof(map));
+        GetArrayString(map_list, i, map, sizeof(map));
 
         //If this map matches the search key, add it to the menu
         if(StrContains(map, search_key, false) >= 0){
@@ -498,7 +501,7 @@ public FavoriteSearchHandler(Handle:menu, MenuAction:action, param1, param2)
     {
         new client=param1;
         new String:map[PLATFORM_MAX_PATH];
-        GetMenuItem(menu, param2, info, sizeof(info));
+        GetMenuItem(menu, param2, map, sizeof(map));
         Favorite(map, client, true);
     }
 }
@@ -514,8 +517,8 @@ public UnfavoriteSearchHandler(Handle:menu, MenuAction:action, param1, param2)
     {
         new client=param1;
         new String:map[PLATFORM_MAX_PATH];
-        GetMenuItem(menu, param2, info, sizeof(info));
-        Unfavorite(map, client, false);
+        GetMenuItem(menu, param2, map, sizeof(map));
+        Favorite(map, client, false);
     }
 }
 
@@ -536,29 +539,30 @@ public GetFavorites(client)
 public ReceiveGetFavorites(Handle:socket, String:receive_data[], const data_size, any:headers_pack)
 {
     ResetPack(headers_pack);
-    decl client = GetClientOfUserId(ReadPackCell(headers_pack));
+    new client = GetClientOfUserId(ReadPackCell(headers_pack));
 
     new Handle:json = ParseJson(receive_data);
     new Handle:maps = json_object_get(json, "maps");
     new String:map_buffer[PLATFORM_MAX_PATH];
+    new junk;
 
     new Handle:menu = CreateMenu(NominateMapHandler);
 
     for(new i = 0; i < json_array_size(maps); i++)
     {
         json_array_get_string(maps, i, map_buffer, sizeof(map_buffer));
-        if(GetTrieValue(g_MapTrie, map, _))
+        if(GetTrieValue(g_MapTrie, map_buffer, junk))
         {
-            AddMenuItem(menu, map, map);
+            AddMenuItem(menu, map_buffer, map_buffer);
         }
     }
 
     //If no maps were found don't even bother displaying a menu
-    if(GetMenuItemCount(mapSearchedMenu) > 0){
+    if(GetMenuItemCount(menu) > 0){
         SetMenuTitle(menu, "Favorited Maps");
         DisplayMenu(menu, client, MENU_TIME_FOREVER);
     }else{
-        PrintToChat(client, "[MapVotes] You have no favorited maps that are on this server.")
+        PrintToChat(client, "[MapVotes] You have no favorited maps that are on this server.");
     }
 }
 
@@ -620,9 +624,9 @@ public HaveNotVoted()
     GetCurrentMap(map, sizeof(map));
     Format(query_params, sizeof(query_params), "map=%s&", map);
 
-    for (new i=1; i <= MaxClients; i++)
+    for (new client=1; client <= MaxClients; client++)
     {
-        if (!IsClientInGame(i) || IsFakeClient(i))
+        if (!IsClientInGame(client) || IsFakeClient(client))
         {
             continue;
         }
@@ -631,7 +635,7 @@ public HaveNotVoted()
         player = GetClientUserId(client);
 
         Format(query_buffer, sizeof(query_buffer),
-                "&uids=%s&players=%d", uid, value);
+                "&uids=%s&players=%d", uid, player);
 
         StrCat(query_params, sizeof(query_params), query_buffer);
     }
@@ -649,7 +653,7 @@ public ReceiveHaveNotVoted(Handle:socket, String:receive_data[], const data_size
     for(new i = 0; i < json_array_size(players); i++)
     {
         p = json_array_get_int(players, i);
-        CallVoteOnClient(GetClientOfUserId(p))
+        CallVoteOnClient(GetClientOfUserId(p));
     }
 }
 
