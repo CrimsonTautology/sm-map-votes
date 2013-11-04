@@ -564,6 +564,9 @@ public ReceiveGetFavorites(Handle:socket, String:receive_data[], const data_size
     }else{
         PrintToChat(client, "[MapVotes] You have no favorited maps that are on this server.");
     }
+
+    CloseHandle(json);
+    CloseHandle(maps);
 }
 
 
@@ -655,6 +658,8 @@ public ReceiveHaveNotVoted(Handle:socket, String:receive_data[], const data_size
         p = json_array_get_int(players, i);
         CallVoteOnClient(GetClientOfUserId(p));
     }
+    CloseHandle(json);
+    CloseHandle(players);
 }
 
 public ViewMap(client)
