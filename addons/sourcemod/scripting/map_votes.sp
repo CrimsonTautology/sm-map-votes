@@ -349,13 +349,14 @@ public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
     decl String:uid[MAX_COMMUNITYID_LENGTH];
     Steam_GetCSteamIDForClient(client, uid, sizeof(uid));
 
+    new HTTPRequestHandle:request;
     if(favorite)
     {
-        //MapVotesCall(FAVORITE_ROUTE, query_params, client, ReceiveFavorite);
+        request = CreateMapVotesRequest(FAVORITE_ROUTE);
     }else{
-        //MapVotesCall(UNFAVORITE_ROUTE, query_params, client, ReceiveFavorite);
+        request = CreateMapVotesRequest(UNFAVORITE_ROUTE);
     }
-    new HTTPRequestHandle:request = CreateMapVotesRequest(FAVORITE_ROUTE);
+
     Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
     Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
     SetAccessCode(request);
@@ -443,7 +444,6 @@ public GetFavorites(client)
     Format(query_params, sizeof(query_params),
             "player=%i&uid=%s", GetClientUserId(client), uid);
 
-    //MapVotesCall(GET_FAVORITES_ROUTE, query_params, client, ReceiveGetFavorites);
     new HTTPRequestHandle:request = CreateMapVotesRequest(GET_FAVORITES_ROUTE);
     Steam_SetHTTPRequestGetOrPostParameterInt(request, "player", GetClientUserId(client));
     Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
@@ -564,9 +564,8 @@ public HaveNotVoted()
         Steam_SetHTTPRequestGetOrPostParameterInt(request, "players", player);
     }
 
-    //MapVotesCall(HAVE_NOT_VOTED_ROUTE, query_params, 0, ReceiveHaveNotVoted);
     SetAccessCode(request);
-    Steam_SendHTTPRequest(request, ReceiveHaveNotVoted, GetClientUserId(client));
+    Steam_SendHTTPRequest(request, ReceiveHaveNotVoted, 0);
 }
 
 public ReceiveHaveNotVoted(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
@@ -615,12 +614,11 @@ public ViewMap(client)
 
 public Action:Test(client, args)
 {
-    decl String:query_params[512];
-
-    //NOTE: uid is the client's steamid64 while player is the client's userid; the index incremented for each client that joined the server
-    Format(query_params, sizeof(query_params),
-            "player=%i&uid=%s", 7, "76561197998903004");
-
     //MapVotesCall(GET_FAVORITES_ROUTE, query_params, 0, ReceiveGetFavorites);
+    new HTTPRequestHandle:request = CreateMapVotesRequest(GET_FAVORITES_ROUTE);
+    Steam_SetHTTPRequestGetOrPostParameterInt(request, "player", 7);
+    Steam_SetHTTPRequestGetOrPostParameter(request, "uid",  "76561197998903004");
+    SetAccessCode(request);
+    Steam_SendHTTPRequest(request, ReceiveGetFavorites, 0);
 }
 
