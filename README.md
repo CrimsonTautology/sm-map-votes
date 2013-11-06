@@ -1,4 +1,4 @@
-SM_NOMGREP
+SM_MAP_VOTES
 ===============
 Sourcemod Plugin to connect with the [Map Votes API](https://github.com/CrimsonTautology/map_votes).
 
