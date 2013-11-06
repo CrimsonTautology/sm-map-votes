@@ -253,17 +253,18 @@ public SetAccessCode(&HTTPRequestHandle:request)
 
 public HTTPRequestHandle:CreateMapVotesRequest(const String:route[])
 {
-    //TODO - check for forward slash after base_url;
     decl String:base_url[256], String:url[512];
     GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
+
+    //TODO - check for forward slash after base_url;
+    bool:check =  FindCharInString(base_url, '/', true) == sizeof(base_url) - 1;
+
     Format(url, sizeof(url),
-            "%s%s", base_url, route);
+            "%s%s%s", base_url, (!check ? "/" : ""), route);
 
-    //ReplaceString(base_url, sizeof(base_url), "http://", "", false);
-    //ReplaceString(base_url, sizeof(base_url), "https://", "", false);
     return Steam_CreateHTTPRequest(HTTPMethod_POST, url);
-
 }
+
 public Steam_SetHTTPRequestGetOrPostParameterInt(&HTTPRequestHandle:request, const String:param[], value)
 {
     String[64] tmp;
