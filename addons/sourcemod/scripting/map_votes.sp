@@ -278,16 +278,17 @@ public AddAccessCode(&HTTPRequestHandle:request)
 	Steam_SetHTTPRequestGetOrPostParameter(request, "access_token", api_key);
 }
 
-public BuildAbsoluteURL(String:route[], String:out[])
+public HTTPRequestHandle:CreateMapVotesRequest(const String:route[])
 {
-    //TODO;
-    decl String:base_url[128];
+    //TODO - check for forward slash after base_url;
+    decl String:base_url[256], String:url[512];
     GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
-    Format(out, sizeof(out),
+    Format(url, sizeof(url),
             "%s%s", base_url, route);
 
     //ReplaceString(base_url, sizeof(base_url), "http://", "", false);
     //ReplaceString(base_url, sizeof(base_url), "https://", "", false);
+    return Steam_CreateHTTPRequest(HTTPMethod_POST, url);
 
 }
 public Steam_SetHTTPRequestGetOrPostParameterInt(&HTTPRequestHandle:request, const String:param[], value)
@@ -312,7 +313,7 @@ public WriteMessage(client, String:message[256])
     decl String:map[PLATFORM_MAX_PATH];
     GetCurrentMap(map, sizeof(map));
 
-    new HTTPRequestHandle:request = Steam_CreateHTTPRequest(HTTPMethod_POST, url);
+    new HTTPRequestHandle:request = CreateMapVotesRequest(WRITE_MESSAGE_ROUTE);
 	Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
 	Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
 	Steam_SetHTTPRequestGetOrPostParameter(request, "comment", base64_url);
@@ -333,11 +334,7 @@ public ReceiveWriteMessage(HTTPRequestHandle:request, bool:successful, HTTPStatu
         PrintToChat(client, "[MapVotes] Comment Added");
     }
 
-    //TODo
-	//decl String:data[4096];
-	//Steam_GetHTTPResponseBodyData(request, data, sizeof(data));
 	Steam_ReleaseHTTPRequest(request);
-
 }
 
 public CastVote(client, value)
@@ -353,7 +350,7 @@ public CastVote(client, value)
 
         GetCurrentMap(map, sizeof(map));
 
-        new HTTPRequestHandle:request = Steam_CreateHTTPRequest(HTTPMethod_POST, url);
+        new HTTPRequestHandle:request = CreateMapVotesRequest(CAST_VOTE_ROUTE);
         Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
         Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
         Steam_SetHTTPRequestGetOrPostParameterInt(request, "value", value);
@@ -389,7 +386,7 @@ public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
     }else{
         //MapVotesCall(UNFAVORITE_ROUTE, query_params, client, ReceiveFavorite);
     }
-    new HTTPRequestHandle:request = Steam_CreateHTTPRequest(HTTPMethod_POST, url);
+    new HTTPRequestHandle:request = CreateMapVotesRequest(FAVORITE_ROUTE);
     Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
     Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
     AddAccessCode(request);
@@ -479,7 +476,7 @@ public GetFavorites(client)
             "player=%i&uid=%s", GetClientUserId(client), uid);
 
     //MapVotesCall(GET_FAVORITES_ROUTE, query_params, client, ReceiveGetFavorites);
-    new HTTPRequestHandle:request = Steam_CreateHTTPRequest(HTTPMethod_POST, url);
+    new HTTPRequestHandle:request = CreateMapVotesRequest(GET_FAVORITES_ROUTE);
     Steam_SetHTTPRequestGetOrPostParameterInt(request, "player", GetClientUserId(client));
     Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
     AddAccessCode(request);
@@ -581,7 +578,7 @@ public HaveNotVoted()
     decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
     new String:query_buffer[512], String:query_params[512], String:map[PLATFORM_MAX_PATH];
     new player;
-    new HTTPRequestHandle:request = Steam_CreateHTTPRequest(HTTPMethod_POST, url);
+    new HTTPRequestHandle:request = CreateMapVotesRequest(HAVE_NOT_VOTED_ROUTE);
 
     GetCurrentMap(map, sizeof(map));
     Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
