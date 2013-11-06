@@ -13,7 +13,7 @@
 #pragma semicolon 1
 
 #include <sourcemod>
-#include <socket>
+#include <steamtools>
 #include <base64>
 #include <smjansson>
 
@@ -217,63 +217,6 @@ public Action:Command_HaveNotVoted(client, args)
     return Plugin_Handled;
 }
 
-public OnSocketConnected(Handle:socket, any:headers_pack)
-{
-    decl String:request_string[1024];
-
-    ResetPack(headers_pack);
-    ReadPackCell(headers_pack);
-    ReadPackString(headers_pack, request_string, sizeof(request_string));
-
-    SocketSend(socket, request_string);
-}
-
-public OnSocketDisconnected(Handle:socket, any:headers_pack) {
-    // Connection: close advises the webserver to close the connection when the transfer is finished
-    // we're done here
-    CloseHandle(headers_pack);
-    CloseHandle(socket);
-}
-
-public OnSocketError(Handle:socket, const error_type, const error_num, any:headers_pack) {
-    // a socket error occured
-    ResetPack(headers_pack);
-    new client = GetClientOfUserId(ReadPackCell(headers_pack));
-
-    if(error_type == EMPTY_HOST )
-    {
-        LogError("[MapVotes] Empty Host (errno %d)", error_num);
-    } else if (error_type == NO_HOST )
-    {
-        LogError("[MapVotes] No Host (errno %d)", error_num);
-    } else if (error_type == CONNECT_ERROR )
-    {
-        LogError("[MapVotes] Connection Error (errno %d)", error_num);
-    } else if (error_type == SEND_ERROR )
-    {
-        LogError("[MapVotes] Send Error (errno %d)", error_num);
-    } else if (error_type == BIND_ERROR )
-    {
-        LogError("[MapVotes] Bind Error (errno %d)", error_num);
-    } else if (error_type == RECV_ERROR )
-    {
-        LogError("[MapVotes] Recieve Error (errno %d)", error_num);
-    } else if (error_type == LISTEN_ERROR )
-    {
-        LogError("[MapVotes] Listen Error (errno %d)", error_num);
-    } else
-    {
-        LogError("[MapVotes] socket error %d (errno %d)", error_type, error_num);
-    }
-
-    if(client)
-    {
-        PrintToChat(client, "[MapVotes] socket error %d (errno %d)", error_type, error_num);
-    }
-
-    CloseHandle(headers_pack);
-    CloseHandle(socket);
-}
 
 BuildMapListAndTrie()
 {
@@ -301,76 +244,32 @@ BuildMapListAndTrie()
     }
 }
 
-
-//By 11530
-//GetSteamAccountID(client) does not work because we don't have 64 bit types
-stock bool:GetCommunityIDString(const String:SteamID[], String:CommunityID[], const CommunityIDSize) 
-{ 
-    decl String:SteamIDParts[3][11]; 
-    new const String:Identifier[] = "76561197960265728"; 
-
-    if ((CommunityIDSize < 1) || (ExplodeString(SteamID, ":", SteamIDParts, sizeof(SteamIDParts), sizeof(SteamIDParts[])) != 3)) 
-    { 
-        CommunityID[0] = '\0'; 
-        return false; 
-    } 
-
-    new Current, CarryOver = (SteamIDParts[1][0] == '1'); 
-    for (new i = (CommunityIDSize - 2), j = (strlen(SteamIDParts[2]) - 1), k = (strlen(Identifier) - 1); i >= 0; i--, j--, k--) 
-    { 
-        Current = (j >= 0 ? (2 * (SteamIDParts[2][j] - '0')) : 0) + CarryOver + (k >= 0 ? ((Identifier[k] - '0') * 1) : 0); 
-        CarryOver = Current / 10; 
-        CommunityID[i] = (Current % 10) + '0'; 
-    } 
-
-    CommunityID[CommunityIDSize - 1] = '\0'; 
-    return true; 
-}  
-
-public MapVotesCall(String:route[128], String:query_params[512], client, SocketReceiveCB:rfunc)
+public SetAccessCode(&HTTPRequestHandle:request)
 {
-    new port= GetConVarInt(g_Cvar_MapVotesPort);
-    decl String:base_url[128], String:api_key[128];
-    GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
+    decl String:api_key[128];
     GetConVarString(g_Cvar_MapVotesApiKey, api_key, sizeof(api_key));
-
-    ReplaceString(base_url, sizeof(base_url), "http://", "", false);
-    ReplaceString(base_url, sizeof(base_url), "https://", "", false);
-
-    Format(query_params, sizeof(query_params), "%s&access_token=%s", query_params, api_key);
-
-    HTTPPost(base_url, route, query_params, port, client, rfunc);
+	Steam_SetHTTPRequestGetOrPostParameter(request, "access_token", api_key);
 }
 
-public HTTPPost(String:base_url[128], String:route[128], String:query_params[512], port, client, SocketReceiveCB:rfunc)
+public HTTPRequestHandle:CreateMapVotesRequest(const String:route[])
 {
-    new Handle:socket = SocketCreate(SOCKET_TCP, OnSocketError);
+    decl String:base_url[256], String:url[512];
+    GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
 
-    //This Formats the headers needed to make a HTTP/1.1 POST request.
-    new String:request_string[1024];
-    Format(request_string, sizeof(request_string),
-            "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-type: application/x-www-form-urlencoded\r\nContent-length: %d\r\n\r\n%s",
-            route,
-            base_url,
-            strlen(query_params),
-            query_params);
+    //TODO - check for forward slash after base_url;
+    bool:check =  FindCharInString(base_url, '/', true) == sizeof(base_url) - 1;
 
-    new Handle:headers_pack = CreateDataPack();
-    WritePackCell(headers_pack, GetClientUserId(client));
-    WritePackString(headers_pack, request_string);
-    SocketSetArg(socket, headers_pack);
+    Format(url, sizeof(url),
+            "%s%s%s", base_url, (!check ? "/" : ""), route);
 
-    SocketConnect(socket, OnSocketConnected, rfunc, OnSocketDisconnected, base_url, port);
+    return Steam_CreateHTTPRequest(HTTPMethod_POST, url);
 }
 
-//Parse an http post response to strip out the header and byte counts to get the json string
-public Handle:ParseJson(String:receive_data[])
+public Steam_SetHTTPRequestGetOrPostParameterInt(&HTTPRequestHandle:request, const String:param[], value)
 {
-    new String:raw[2][1024], String:line[2][1024];
-    ExplodeString(receive_data, "\r\n\r\n", raw, sizeof(raw), sizeof(raw[]));
-    ExplodeString(raw[1], "\r\n", line, sizeof(line), sizeof(line[]));
-
-    return json_load(line[1]);
+    String[64] tmp;
+    IntToString(value, tmp, sizeof(tmp));
+    Steam_SetHTTPRequestGetOrPostParameter(request, param, tmp);
 }
 
 public WriteMessage(client, String:message[256])
@@ -380,89 +279,98 @@ public WriteMessage(client, String:message[256])
     EncodeBase64(base64, sizeof(base64), message);
     Base64MimeToUrl(base64_url, sizeof(base64_url), base64);
 
-    decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
-    GetClientAuthString(client, buffer, sizeof(buffer));
-    GetCommunityIDString(buffer, uid, sizeof(uid));
+    decl String:uid[MAX_COMMUNITYID_LENGTH];
+    Steam_GetCSteamIDForClient(client, uid, sizeof(uid));
 
-    decl String:query_params[512], String:map[PLATFORM_MAX_PATH];
+    decl String:map[PLATFORM_MAX_PATH];
     GetCurrentMap(map, sizeof(map));
-    Format(query_params, sizeof(query_params),
-            "map=%s&uid=%s&comment=%s&base64=true", map, uid, base64);
 
-    MapVotesCall(WRITE_MESSAGE_ROUTE, query_params, client, ReceiveWriteMessage);
+    new HTTPRequestHandle:request = CreateMapVotesRequest(WRITE_MESSAGE_ROUTE);
+	Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
+	Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
+	Steam_SetHTTPRequestGetOrPostParameter(request, "comment", base64_url);
+	Steam_SetHTTPRequestGetOrPostParameter(request, "base64", "1");
+    SetAccessCode(request);
+    Steam_SendHTTPRequest(request, ReceiveWriteMessage, GetClientUserId(client));
 }
 
-public ReceiveWriteMessage(Handle:socket, String:receive_data[], const data_size, any:headers_pack)
+public ReceiveWriteMessage(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
 {
-    ResetPack(headers_pack);
-    new client = GetClientOfUserId(ReadPackCell(headers_pack));
+    new client = GetClientOfUserId(userid);
 
-    if(client)
+    if(client && successful)
     {
         PrintToChat(client, "[MapVotes] Comment Added");
     }
+
+	Steam_ReleaseHTTPRequest(request);
 }
 
 public CastVote(client, value)
 {
-    decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
-    GetClientAuthString(client, buffer, sizeof(buffer));
-    GetCommunityIDString(buffer, uid, sizeof(uid));
 
     if(!(value == -1 || value == 0 || value == 1)){
         LogError("[MapVotes] invalid vote value %d (steam_user: %s)", value, uid);
     }else{
-        decl String:query_params[512], String:map[PLATFORM_MAX_PATH];
+        decl String:map[PLATFORM_MAX_PATH];
+        decl String:uid[MAX_COMMUNITYID_LENGTH];
+        Steam_GetCSteamIDForClient(client, uid, sizeof(uid));
 
         GetCurrentMap(map, sizeof(map));
 
-        Format(query_params, sizeof(query_params),
-                "map=%s&uid=%s&value=%d", map, uid, value);
-
-        MapVotesCall(CAST_VOTE_ROUTE, query_params, client, ReceiveCastVote);
+        new HTTPRequestHandle:request = CreateMapVotesRequest(CAST_VOTE_ROUTE);
+        Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
+        Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
+        Steam_SetHTTPRequestGetOrPostParameterInt(request, "value", value);
+        SetAccessCode(request);
+        Steam_SendHTTPRequest(request, ReceiveCastVote, GetClientUserId(client));
     }
 
 }
 
-public ReceiveCastVote(Handle:socket, String:receive_data[], const data_size, any:headers_pack)
+public ReceiveCastVote(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
 {
-    ResetPack(headers_pack);
-    new client = GetClientOfUserId(ReadPackCell(headers_pack));
+    new client = GetClientOfUserId(userid);
 
-    if(client)
+    if(client && successful)
     {
         PrintToChat(client, "[MapVotes] Vote Cast");
     }
+
+	Steam_ReleaseHTTPRequest(request);
 }
 
 public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
 {
-    decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
-    GetClientAuthString(client, buffer, sizeof(buffer));
-    GetCommunityIDString(buffer, uid, sizeof(uid));
-    decl String:query_params[512];
+    decl String:uid[MAX_COMMUNITYID_LENGTH];
+    Steam_GetCSteamIDForClient(client, uid, sizeof(uid));
 
-    Format(query_params, sizeof(query_params),
-            "map=%s&uid=%s", map, uid);
-
+    new HTTPRequestHandle:request;
     if(favorite)
     {
-        MapVotesCall(FAVORITE_ROUTE, query_params, client, ReceiveFavorite);
+        request = CreateMapVotesRequest(FAVORITE_ROUTE);
     }else{
-        MapVotesCall(UNFAVORITE_ROUTE, query_params, client, ReceiveFavorite);
+        request = CreateMapVotesRequest(UNFAVORITE_ROUTE);
     }
+
+    Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
+    Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
+    SetAccessCode(request);
+    Steam_SendHTTPRequest(request, ReceiveFavorite, GetClientUserId(client));
 }
 
-public ReceiveFavorite(Handle:socket, String:receive_data[], const data_size, any:headers_pack)
+public ReceiveFavorite(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
 {
-    ResetPack(headers_pack);
-    new client = GetClientOfUserId(ReadPackCell(headers_pack));
+    new client = GetClientOfUserId(userid);
 
-    if(client)
+    if(client && successful)
     {
         PrintToChat(client, "[MapVotes] Updated Favorites");
     }
+
+	Steam_ReleaseHTTPRequest(request);
 }
+
 
 
 public MapSearch(client, String:search_key[PLATFORM_MAX_PATH], Handle:map_list, MenuHandler:handler)
@@ -524,24 +432,37 @@ public UnfavoriteSearchHandler(Handle:menu, MenuAction:action, param1, param2)
 
 public GetFavorites(client)
 {
-    decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
-    GetClientAuthString(client, buffer, sizeof(buffer));
-    GetCommunityIDString(buffer, uid, sizeof(uid));
-    decl String:query_params[512];
+    decl String:uid[MAX_COMMUNITYID_LENGTH];
+    Steam_GetCSteamIDForClient(client, uid, sizeof(uid));
 
-    //NOTE: uid is the client's steamid64 while player is the client's userid; the index incremented for each client that joined the server
-    Format(query_params, sizeof(query_params),
-            "player=%i&uid=%s", GetClientUserId(client), uid);
-
-    MapVotesCall(GET_FAVORITES_ROUTE, query_params, client, ReceiveGetFavorites);
+    new HTTPRequestHandle:request = CreateMapVotesRequest(GET_FAVORITES_ROUTE);
+    Steam_SetHTTPRequestGetOrPostParameterInt(request, "player", GetClientUserId(client));
+    Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
+    SetAccessCode(request);
+    Steam_SendHTTPRequest(request, ReceiveGetFavorites, GetClientUserId(client));
 }
 
-public ReceiveGetFavorites(Handle:socket, String:receive_data[], const data_size, any:headers_pack)
+public ReceiveGetFavorites(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
 {
-    ResetPack(headers_pack);
-    new client = GetClientOfUserId(ReadPackCell(headers_pack));
+    new client = GetClientOfUserId(userid);
+    if(!client)
+    {
+        //User logged off
+        Steam_ReleaseHTTPRequest(request);
+        return;
+    }
+    if(!successful || code != HTTPStatusCode_OK)
+    {
+        LogError("[MapVotes] Error at RecivedGetFavorites (HTTP Code %d)", code);
+        Steam_ReleaseHTTPRequest(request);
+        return;
+    }
+    
+    decl String:data[4096];
+    Steam_GetHTTPResponseBodyData(request, data, sizeof(data));
+    Steam_ReleaseHTTPRequest(request);
 
-    new Handle:json = ParseJson(receive_data);
+    new Handle:json = json_load(data);
     new Handle:maps = json_object_get(json, "maps");
     new String:map_buffer[PLATFORM_MAX_PATH];
     new junk;
@@ -557,6 +478,9 @@ public ReceiveGetFavorites(Handle:socket, String:receive_data[], const data_size
         }
     }
 
+    CloseHandle(json);
+    CloseHandle(maps);
+
     //If no maps were found don't even bother displaying a menu
     if(GetMenuItemCount(menu) > 0){
         SetMenuTitle(menu, "Favorited Maps");
@@ -564,9 +488,6 @@ public ReceiveGetFavorites(Handle:socket, String:receive_data[], const data_size
     }else{
         PrintToChat(client, "[MapVotes] You have no favorited maps that are on this server.");
     }
-
-    CloseHandle(json);
-    CloseHandle(maps);
 }
 
 
@@ -620,12 +541,13 @@ public VoteMenuHandler(Handle:menu, MenuAction:action, param1, param2)
 
 public HaveNotVoted()
 {
-    decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
-    new String:query_buffer[512], String:query_params[512], String:map[PLATFORM_MAX_PATH];
+    decl String:uid[MAX_COMMUNITYID_LENGTH];
+    decl String:map[PLATFORM_MAX_PATH];
     new player;
+    new HTTPRequestHandle:request = CreateMapVotesRequest(HAVE_NOT_VOTED_ROUTE);
 
     GetCurrentMap(map, sizeof(map));
-    Format(query_params, sizeof(query_params), "map=%s&", map);
+    Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
 
     for (new client=1; client <= MaxClients; client++)
     {
@@ -633,24 +555,33 @@ public HaveNotVoted()
         {
             continue;
         }
-        GetClientAuthString(client, buffer, sizeof(buffer));
-        GetCommunityIDString(buffer, uid, sizeof(uid));
+        Steam_GetCSteamIDForClient(client, uid, sizeof(uid));
         player = GetClientUserId(client);
 
-        Format(query_buffer, sizeof(query_buffer),
-                "&uids=%s&players=%d", uid, player);
-
-        StrCat(query_params, sizeof(query_params), query_buffer);
+        Steam_SetHTTPRequestGetOrPostParameter(request, "uids", uid);
+        Steam_SetHTTPRequestGetOrPostParameterInt(request, "players", player);
     }
 
-    MapVotesCall(HAVE_NOT_VOTED_ROUTE, query_params, 0, ReceiveHaveNotVoted);
+    SetAccessCode(request);
+    Steam_SendHTTPRequest(request, ReceiveHaveNotVoted, 0);
 }
 
-public ReceiveHaveNotVoted(Handle:socket, String:receive_data[], const data_size, any:headers_pack)
+public ReceiveHaveNotVoted(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
 {
-    new Handle:json = ParseJson(receive_data);
-    new Handle:players = json_object_get(json, "players");
-    new p;
+    if(!successful || code != HTTPStatusCode_OK)
+    {
+        LogError("[MapVotes] Error at RecivedHaveNotVoted (HTTP Code %d)", code);
+        Steam_ReleaseHTTPRequest(request);
+        return;
+    }
+    
+    decl String:data[4096];
+    Steam_GetHTTPResponseBodyData(request, data, sizeof(data));
+    Steam_ReleaseHTTPRequest(request);
+
+    decl Handle:json = json_load(data);
+    decl Handle:players = json_object_get(json, "players");
+    decl p;
     new String:map_buffer[PLATFORM_MAX_PATH];
 
     for(new i = 0; i < json_array_size(players); i++)
@@ -667,6 +598,7 @@ public ViewMap(client)
     decl String:map[PLATFORM_MAX_PATH], String:url[256], String:base_url[128];
     GetCurrentMap(map, sizeof(map));
     GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
+    //TODO
     ReplaceString(base_url, sizeof(base_url), "http://", "", false);
     ReplaceString(base_url, sizeof(base_url), "https://", "", false);
 
@@ -680,12 +612,11 @@ public ViewMap(client)
 
 public Action:Test(client, args)
 {
-    decl String:query_params[512];
-
-    //NOTE: uid is the client's steamid64 while player is the client's userid; the index incremented for each client that joined the server
-    Format(query_params, sizeof(query_params),
-            "player=%i&uid=%s", 7, "76561197998903004");
-
-    MapVotesCall(GET_FAVORITES_ROUTE, query_params, 0, ReceiveGetFavorites);
+    //MapVotesCall(GET_FAVORITES_ROUTE, query_params, 0, ReceiveGetFavorites);
+    new HTTPRequestHandle:request = CreateMapVotesRequest(GET_FAVORITES_ROUTE);
+    Steam_SetHTTPRequestGetOrPostParameterInt(request, "player", 7);
+    Steam_SetHTTPRequestGetOrPostParameter(request, "uid",  "76561197998903004");
+    SetAccessCode(request);
+    Steam_SendHTTPRequest(request, ReceiveGetFavorites, 0);
 }
 
