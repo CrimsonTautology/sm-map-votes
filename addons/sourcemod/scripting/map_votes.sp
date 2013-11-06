@@ -291,16 +291,13 @@ public WriteMessage(client, String:message[256])
 	Steam_SetHTTPRequestGetOrPostParameter(request, "base64", "1");
     SetAccessCode(request);
     Steam_SendHTTPRequest(request, ReceiveWriteMessage, GetClientUserId(client));
-
-    //MapVotesCall(WRITE_MESSAGE_ROUTE, query_params, client, ReceiveWriteMessage);
-
 }
 
 public ReceiveWriteMessage(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
 {
     new client = GetClientOfUserId(userid);
 
-    if(client && Successful)
+    if(client && successful)
     {
         PrintToChat(client, "[MapVotes] Comment Added");
     }
@@ -326,8 +323,6 @@ public CastVote(client, value)
         Steam_SetHTTPRequestGetOrPostParameterInt(request, "value", value);
         SetAccessCode(request);
         Steam_SendHTTPRequest(request, ReceiveCastVote, GetClientUserId(client));
-
-        //MapVotesCall(CAST_VOTE_ROUTE, query_params, client, ReceiveCastVote);
     }
 
 }
@@ -336,7 +331,7 @@ public ReceiveCastVote(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
 {
     new client = GetClientOfUserId(userid);
 
-    if(client && Successful)
+    if(client && successful)
     {
         PrintToChat(client, "[MapVotes] Vote Cast");
     }
@@ -367,7 +362,7 @@ public ReceiveFavorite(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
 {
     new client = GetClientOfUserId(userid);
 
-    if(client && Successful)
+    if(client && successful)
     {
         PrintToChat(client, "[MapVotes] Updated Favorites");
     }
@@ -438,11 +433,6 @@ public GetFavorites(client)
 {
     decl String:uid[MAX_COMMUNITYID_LENGTH];
     Steam_GetCSteamIDForClient(client, uid, sizeof(uid));
-    decl String:query_params[512];
-
-    //NOTE: uid is the client's steamid64 while player is the client's userid; the index incremented for each client that joined the server
-    Format(query_params, sizeof(query_params),
-            "player=%i&uid=%s", GetClientUserId(client), uid);
 
     new HTTPRequestHandle:request = CreateMapVotesRequest(GET_FAVORITES_ROUTE);
     Steam_SetHTTPRequestGetOrPostParameterInt(request, "player", GetClientUserId(client));
@@ -454,11 +444,18 @@ public GetFavorites(client)
 public ReceiveGetFavorites(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
 {
     new client = GetClientOfUserId(userid);
-    if(client && Successful)
+    if(!client)
     {
-        //TODO
+        //User logged off
+        Steam_ReleaseHTTPRequest(request);
+        return;
     }
-
+    if(!successful || code != HTTPStatusCode_OK)
+    {
+        LogError("[MapVotes] Error at RecivedGetFavorites (HTTP Code %d)", code);
+        Steam_ReleaseHTTPRequest(request);
+        return;
+    }
     
     decl String:data[4096];
     Steam_GetHTTPResponseBodyData(request, data, sizeof(data));
@@ -544,7 +541,7 @@ public VoteMenuHandler(Handle:menu, MenuAction:action, param1, param2)
 public HaveNotVoted()
 {
     decl String:uid[MAX_COMMUNITYID_LENGTH];
-    new String:query_buffer[512], String:query_params[512], String:map[PLATFORM_MAX_PATH];
+    decl String:map[PLATFORM_MAX_PATH];
     new player;
     new HTTPRequestHandle:request = CreateMapVotesRequest(HAVE_NOT_VOTED_ROUTE);
 
