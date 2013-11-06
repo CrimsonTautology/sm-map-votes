@@ -244,34 +244,6 @@ BuildMapListAndTrie()
     }
 }
 
-
-//By 11530
-//GetSteamAccountID(client) does not work because we don't have 64 bit types
-//TODO - maybe deprecated
-stock bool:GetCommunityIDString(const String:SteamID[], String:CommunityID[], const CommunityIDSize) 
-{ 
-    decl String:SteamIDParts[3][11]; 
-    new const String:Identifier[] = "76561197960265728"; 
-
-    if ((CommunityIDSize < 1) || (ExplodeString(SteamID, ":", SteamIDParts, sizeof(SteamIDParts), sizeof(SteamIDParts[])) != 3)) 
-    { 
-        CommunityID[0] = '\0'; 
-        return false; 
-    } 
-
-    new Current, CarryOver = (SteamIDParts[1][0] == '1'); 
-    for (new i = (CommunityIDSize - 2), j = (strlen(SteamIDParts[2]) - 1), k = (strlen(Identifier) - 1); i >= 0; i--, j--, k--) 
-    { 
-        Current = (j >= 0 ? (2 * (SteamIDParts[2][j] - '0')) : 0) + CarryOver + (k >= 0 ? ((Identifier[k] - '0') * 1) : 0); 
-        CarryOver = Current / 10; 
-        CommunityID[i] = (Current % 10) + '0'; 
-    } 
-
-    CommunityID[CommunityIDSize - 1] = '\0'; 
-    return true; 
-}  
-
-    }
 public SetAccessCode(&HTTPRequestHandle:request)
 {
     decl String:api_key[128];
@@ -306,10 +278,8 @@ public WriteMessage(client, String:message[256])
     EncodeBase64(base64, sizeof(base64), message);
     Base64MimeToUrl(base64_url, sizeof(base64_url), base64);
 
-    decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
-    GetClientAuthString(client, buffer, sizeof(buffer));
-    //TODO Steam_GetCSteamIDForClient?
-    GetCommunityIDString(buffer, uid, sizeof(uid));
+    decl String:uid[MAX_COMMUNITYID_LENGTH];
+    Steam_GetCSteamIDForClient(client, uid, sizeof(uid));
 
     decl String:map[PLATFORM_MAX_PATH];
     GetCurrentMap(map, sizeof(map));
@@ -345,9 +315,8 @@ public CastVote(client, value)
         LogError("[MapVotes] invalid vote value %d (steam_user: %s)", value, uid);
     }else{
         decl String:map[PLATFORM_MAX_PATH];
-        decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
-        GetClientAuthString(client, buffer, sizeof(buffer));
-        GetCommunityIDString(buffer, uid, sizeof(uid));
+        decl String:uid[MAX_COMMUNITYID_LENGTH];
+        Steam_GetCSteamIDForClient(client, uid, sizeof(uid));
 
         GetCurrentMap(map, sizeof(map));
 
@@ -377,9 +346,8 @@ public ReceiveCastVote(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
 
 public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
 {
-    decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
-    GetClientAuthString(client, buffer, sizeof(buffer));
-    GetCommunityIDString(buffer, uid, sizeof(uid));
+    decl String:uid[MAX_COMMUNITYID_LENGTH];
+    Steam_GetCSteamIDForClient(client, uid, sizeof(uid));
 
     if(favorite)
     {
@@ -467,9 +435,8 @@ public UnfavoriteSearchHandler(Handle:menu, MenuAction:action, param1, param2)
 
 public GetFavorites(client)
 {
-    decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
-    GetClientAuthString(client, buffer, sizeof(buffer));
-    GetCommunityIDString(buffer, uid, sizeof(uid));
+    decl String:uid[MAX_COMMUNITYID_LENGTH];
+    Steam_GetCSteamIDForClient(client, uid, sizeof(uid));
     decl String:query_params[512];
 
     //NOTE: uid is the client's steamid64 while player is the client's userid; the index incremented for each client that joined the server
@@ -576,7 +543,7 @@ public VoteMenuHandler(Handle:menu, MenuAction:action, param1, param2)
 
 public HaveNotVoted()
 {
-    decl String:buffer[MAX_STEAMID_LENGTH], String:uid[MAX_COMMUNITYID_LENGTH];
+    decl String:uid[MAX_COMMUNITYID_LENGTH];
     new String:query_buffer[512], String:query_params[512], String:map[PLATFORM_MAX_PATH];
     new player;
     new HTTPRequestHandle:request = CreateMapVotesRequest(HAVE_NOT_VOTED_ROUTE);
@@ -590,8 +557,7 @@ public HaveNotVoted()
         {
             continue;
         }
-        GetClientAuthString(client, buffer, sizeof(buffer));
-        GetCommunityIDString(buffer, uid, sizeof(uid));
+        Steam_GetCSteamIDForClient(client, uid, sizeof(uid));
         player = GetClientUserId(client);
 
         Steam_SetHTTPRequestGetOrPostParameter(request, "uids", uid);
