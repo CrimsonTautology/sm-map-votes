@@ -570,20 +570,20 @@ public HaveNotVoted()
 
 public ReceiveHaveNotVoted(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
 {
-    new client = GetClientOfUserId(userid);
-    if(client && Successful)
+    if(!successful || code != HTTPStatusCode_OK)
     {
-        //TODO
+        LogError("[MapVotes] Error at RecivedHaveNotVoted (HTTP Code %d)", code);
+        Steam_ReleaseHTTPRequest(request);
+        return;
     }
-
     
     decl String:data[4096];
     Steam_GetHTTPResponseBodyData(request, data, sizeof(data));
     Steam_ReleaseHTTPRequest(request);
 
-    new Handle:json = json_load(data);
-    new Handle:players = json_object_get(json, "players");
-    new p;
+    decl Handle:json = json_load(data);
+    decl Handle:players = json_object_get(json, "players");
+    decl p;
     new String:map_buffer[PLATFORM_MAX_PATH];
 
     for(new i = 0; i < json_array_size(players); i++)
