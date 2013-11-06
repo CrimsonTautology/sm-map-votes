@@ -247,6 +247,7 @@ BuildMapListAndTrie()
 
 //By 11530
 //GetSteamAccountID(client) does not work because we don't have 64 bit types
+//TODO - maybe deprecated
 stock bool:GetCommunityIDString(const String:SteamID[], String:CommunityID[], const CommunityIDSize) 
 { 
     decl String:SteamIDParts[3][11]; 
@@ -289,26 +290,11 @@ public BuildAbsoluteURL(String:route[], String:out[])
     //ReplaceString(base_url, sizeof(base_url), "https://", "", false);
 
 }
-
-public HTTPPost(String:base_url[128], String:route[128], String:query_params[512], port, client, SocketReceiveCB:rfunc)
+public Steam_SetHTTPRequestGetOrPostParameterInt(&HTTPRequestHandle:request, const String:param[], value)
 {
-    new Handle:socket = SocketCreate(SOCKET_TCP, OnSocketError);
-
-    //This Formats the headers needed to make a HTTP/1.1 POST request.
-    new String:request_string[1024];
-    Format(request_string, sizeof(request_string),
-            "POST %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nContent-type: application/x-www-form-urlencoded\r\nContent-length: %d\r\n\r\n%s",
-            route,
-            base_url,
-            strlen(query_params),
-            query_params);
-
-    new Handle:headers_pack = CreateDataPack();
-    WritePackCell(headers_pack, GetClientUserId(client));
-    WritePackString(headers_pack, request_string);
-    SocketSetArg(socket, headers_pack);
-
-    SocketConnect(socket, OnSocketConnected, rfunc, OnSocketDisconnected, base_url, port);
+    String[64] tmp;
+    IntToString(tmp, paramValue);
+    Steam_SetHTTPRequestGetOrPostParameter(request, param, tmp);
 }
 
 public WriteMessage(client, String:message[256])
@@ -330,7 +316,7 @@ public WriteMessage(client, String:message[256])
 	Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
 	Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
 	Steam_SetHTTPRequestGetOrPostParameter(request, "comment", base64_url);
-	Steam_SetHTTPRequestGetOrPostParameter(request, "base64", true);
+	Steam_SetHTTPRequestGetOrPostParameter(request, "base64", "1");
     AddAccessCode(request);
     Steam_SendHTTPRequest(request, ReceiveWriteMessage, GetClientUserId(client));
 
@@ -370,7 +356,7 @@ public CastVote(client, value)
         new HTTPRequestHandle:request = Steam_CreateHTTPRequest(HTTPMethod_POST, url);
         Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
         Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
-        Steam_SetHTTPRequestGetOrPostParameter(request, "value", value);
+        Steam_SetHTTPRequestGetOrPostParameterInt(request, "value", value);
         AddAccessCode(request);
         Steam_SendHTTPRequest(request, ReceiveCastVote, GetClientUserId(client));
 
@@ -494,7 +480,7 @@ public GetFavorites(client)
 
     //MapVotesCall(GET_FAVORITES_ROUTE, query_params, client, ReceiveGetFavorites);
     new HTTPRequestHandle:request = Steam_CreateHTTPRequest(HTTPMethod_POST, url);
-    Steam_SetHTTPRequestGetOrPostParameter(request, "player", GetClientUserId(client));
+    Steam_SetHTTPRequestGetOrPostParameterInt(request, "player", GetClientUserId(client));
     Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
     AddAccessCode(request);
     Steam_SendHTTPRequest(request, ReceiveGetFavorites, GetClientUserId(client));
@@ -611,7 +597,7 @@ public HaveNotVoted()
         player = GetClientUserId(client);
 
         Steam_SetHTTPRequestGetOrPostParameter(request, "uids", uid);
-        Steam_SetHTTPRequestGetOrPostParameter(request, "players", player);
+        Steam_SetHTTPRequestGetOrPostParameterInt(request, "players", player);
     }
 
     //MapVotesCall(HAVE_NOT_VOTED_ROUTE, query_params, 0, ReceiveHaveNotVoted);
