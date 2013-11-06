@@ -13,7 +13,7 @@
 #pragma semicolon 1
 
 #include <sourcemod>
-#include <socket>
+#include <steamtools>
 #include <base64>
 #include <smjansson>
 
