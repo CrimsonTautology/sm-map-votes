@@ -268,7 +268,7 @@ public HTTPRequestHandle:CreateMapVotesRequest(const String:route[])
 public Steam_SetHTTPRequestGetOrPostParameterInt(&HTTPRequestHandle:request, const String:param[], value)
 {
     String[64] tmp;
-    IntToString(tmp, paramValue);
+    IntToString(value, tmp, sizeof(tmp));
     Steam_SetHTTPRequestGetOrPostParameter(request, param, tmp);
 }
 
