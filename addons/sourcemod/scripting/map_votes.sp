@@ -348,15 +348,20 @@ public WriteMessage(client, String:message[256])
 
 }
 
-public ReceiveWriteMessage(Handle:socket, String:receive_data[], const data_size, any:headers_pack)
+public ReceiveWriteMessage(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
 {
-    ResetPack(headers_pack);
-    new client = GetClientOfUserId(ReadPackCell(headers_pack));
+    new client = GetClientOfUserId(userid);
 
-    if(client)
+    if(client && Successful)
     {
         PrintToChat(client, "[MapVotes] Comment Added");
     }
+
+    //TODo
+	//decl String:data[4096];
+	//Steam_GetHTTPResponseBodyData(request, data, sizeof(data));
+	//Steam_ReleaseHTTPRequest(request);
+
 }
 
 public CastVote(client, value)
