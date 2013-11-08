@@ -46,6 +46,9 @@ new Handle:g_Cvar_MapVotesApiKey = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesVotingEnabled = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesCommentingEnabled = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesNominationsName = INVALID_HANDLE;
+new Handle:g_Cvar_MapVotesRequestCooldownTime = INVALID_HANDLE;
+
+new g_IsInCooldown[MaxClients+1];
 
 new g_MapFileSerial = -1;
 new Handle:g_MapList = INVALID_HANDLE;
@@ -64,6 +67,7 @@ public OnPluginStart()
     g_Cvar_MapVotesVotingEnabled = CreateConVar("sm_map_votes_voting_enabled", "1", "Whether players are allowed to vote on the current map");
     g_Cvar_MapVotesCommentingEnabled = CreateConVar("sm_map_votes_commenting_enabled", "1", "Whether players are allowed to comment on the current map");
     g_Cvar_MapVotesNominationsName = CreateConVar("sm_map_votes_nominations_plugin", "nominations.smx", "The nominations plugin used by the server");
+    g_Cvar_MapVotesRequestCooldownTime = CreateConVar("sm_map_votes_request_cooldown_time", "2.0", "How long in seconds before a client can send another http request");
 
     RegConsoleCmd("sm_votemenu", Command_VoteMenu, "Bring up a menu to vote on the current map");
     RegConsoleCmd("sm_voteup", Command_VoteUp, "Vote that you like the current map");
