@@ -48,7 +48,7 @@ new Handle:g_Cvar_MapVotesCommentingEnabled = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesNominationsName = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesRequestCooldownTime = INVALID_HANDLE;
 
-new g_IsInCooldown[MaxClients+1];
+new bool:g_IsInCooldown[MaxClients+1];
 
 new g_MapFileSerial = -1;
 new Handle:g_MapList = INVALID_HANDLE;
@@ -277,6 +277,29 @@ public Steam_SetHTTPRequestGetOrPostParameterInt(&HTTPRequestHandle:request, con
     String[64] tmp;
     IntToString(value, tmp, sizeof(tmp));
     Steam_SetHTTPRequestGetOrPostParameter(request, param, tmp);
+}
+
+public StartCooldown(client)
+{
+    //Ignore the server console
+    if (client == 0)
+        return;
+
+    g_IsInCooldown[client] = true;
+    CreateTimer(GetConVarFloat(g_Cvar_MapVotesRequestCooldown), RemoveCooldown);
+}
+
+public bool:IsClientInCooldown(client)
+{
+    if(client == 0)
+        return false;
+    else
+        return g_IsInCooldown[client];
+}
+
+public Action:RemoveCooldown(Handle:timer, any:client)
+{
+    g_IsInCooldown[client] = false;
 }
 
 public WriteMessage(client, String:message[256])
