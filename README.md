@@ -4,7 +4,8 @@ Sourcemod Plugin to connect with the [Map Votes API](https://github.com/CrimsonT
 
 INSTALLATION:
 -------------
-Install the [Socket](http://forums.alliedmods.net/showthread.php?t=67640) Sourcemod extension.
+Install the [Steam Tools](http://forums.alliedmods.net/showthread.php?t=170630) Sourcemod extension.
+Install the [SMJansson](http://forums.alliedmods.net/showthread.php?t=184604) Sourcemod extension.
 
 Compile with 
 > `spcomp addons/sourcemod/scripting/map_votes.sp`
@@ -46,7 +47,6 @@ USAGE:
 
 OTHER:
 ------
-[Code for getting SteamId64s](http://forums.alliedmods.net/showthread.php?t=183443)
 [Base64 Library](http://forums.alliedmods.net/showthread.php?t=101764)
 [SMJansson](https://github.com/thraaawn/SMJansson)
-[Sockets](http://forums.alliedmods.net/showthread.php?t=67640)
+[Steam Tools](http://forums.alliedmods.net/showthread.php?t=170630)
