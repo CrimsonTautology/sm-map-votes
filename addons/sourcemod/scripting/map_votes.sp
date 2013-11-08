@@ -46,6 +46,9 @@ new Handle:g_Cvar_MapVotesApiKey = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesVotingEnabled = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesCommentingEnabled = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesNominationsName = INVALID_HANDLE;
+new Handle:g_Cvar_MapVotesRequestCooldownTime = INVALID_HANDLE;
+
+new bool:g_IsInCooldown[MaxClients+1];
 
 new g_MapFileSerial = -1;
 new Handle:g_MapList = INVALID_HANDLE;
@@ -64,6 +67,7 @@ public OnPluginStart()
     g_Cvar_MapVotesVotingEnabled = CreateConVar("sm_map_votes_voting_enabled", "1", "Whether players are allowed to vote on the current map");
     g_Cvar_MapVotesCommentingEnabled = CreateConVar("sm_map_votes_commenting_enabled", "1", "Whether players are allowed to comment on the current map");
     g_Cvar_MapVotesNominationsName = CreateConVar("sm_map_votes_nominations_plugin", "nominations.smx", "The nominations plugin used by the server");
+    g_Cvar_MapVotesRequestCooldownTime = CreateConVar("sm_map_votes_request_cooldown_time", "2.0", "How long in seconds before a client can send another http request");
 
     RegConsoleCmd("sm_votemenu", Command_VoteMenu, "Bring up a menu to vote on the current map");
     RegConsoleCmd("sm_voteup", Command_VoteUp, "Vote that you like the current map");
@@ -112,7 +116,19 @@ public OnAllPluginsLoaded() {
 
 public Action:Command_VoteMenu(client, args)
 {
-    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
+    if(IsClientInCooldown(client))
+    {
+        ReplyToCommand(client, "User in cooldown");
+        return Plugin_Handled;
+    }
+
+    if(GetConVarBool(g_Cvar_MapVotesVotingEnabled))
+    {
+        ReplyToCommand(client, "Voting not enabled");
+        return Plugin_Handled;
+    }
+
+    if(client && IsClientAuthorized(client)){
         CallVoteOnClient(client);
     }
 
@@ -121,7 +137,19 @@ public Action:Command_VoteMenu(client, args)
 
 public Action:Command_VoteUp(client, args)
 {
-    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
+    if(IsClientInCooldown(client))
+    {
+        ReplyToCommand(client, "User in cooldown");
+        return Plugin_Handled;
+    }
+
+    if(GetConVarBool(g_Cvar_MapVotesVotingEnabled))
+    {
+        ReplyToCommand(client, "Voting not enabled");
+        return Plugin_Handled;
+    }
+
+    if(client && IsClientAuthorized(client)){
         CastVote(client, 1);
     }
 
@@ -130,7 +158,19 @@ public Action:Command_VoteUp(client, args)
 
 public Action:Command_VoteDown(client, args)
 {
-    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
+    if(IsClientInCooldown(client))
+    {
+        ReplyToCommand(client, "User in cooldown");
+        return Plugin_Handled;
+    }
+
+    if(GetConVarBool(g_Cvar_MapVotesVotingEnabled))
+    {
+        ReplyToCommand(client, "Voting not enabled");
+        return Plugin_Handled;
+    }
+
+    if(client && IsClientAuthorized(client)){
         CastVote(client, -1);
     }
 
@@ -139,7 +179,13 @@ public Action:Command_VoteDown(client, args)
 
 public Action:Command_Favorite(client, args)
 {
-    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
+    if(IsClientInCooldown(client))
+    {
+        ReplyToCommand(client, "User in cooldown");
+        return Plugin_Handled;
+    }
+
+    if(client && IsClientAuthorized(client)){
         new String:map[PLATFORM_MAX_PATH];
         if (args <= 0)
         {
@@ -155,7 +201,13 @@ public Action:Command_Favorite(client, args)
 }
 public Action:Command_Unfavorite(client, args)
 {
-    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
+    if(IsClientInCooldown(client))
+    {
+        ReplyToCommand(client, "User in cooldown");
+        return Plugin_Handled;
+    }
+
+    if(client && IsClientAuthorized(client)){
         new String:map[PLATFORM_MAX_PATH];
         if (args <= 0)
         {
@@ -172,7 +224,13 @@ public Action:Command_Unfavorite(client, args)
 }
 public Action:Command_GetFavorites(client, args)
 {
-    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
+    if(IsClientInCooldown(client))
+    {
+        ReplyToCommand(client, "User in cooldown");
+        return Plugin_Handled;
+    }
+
+    if(client && IsClientAuthorized(client)){
         GetFavorites(client);
     }
 
@@ -190,8 +248,15 @@ public Action:Command_ViewMap(client, args)
 
 public Action:Command_MapComment(client, args)
 {
+    if(IsClientInCooldown(client))
+    {
+        ReplyToCommand(client, "User in cooldown");
+        return Plugin_Handled;
+    }
+
     if (!GetConVarBool(g_Cvar_MapVotesCommentingEnabled))
     {
+        ReplyToCommand(client, "Commenting not enabled");
         return Plugin_Handled;
     }
 
@@ -212,6 +277,18 @@ public Action:Command_MapComment(client, args)
 
 public Action:Command_HaveNotVoted(client, args)
 {
+    if(IsClientInCooldown(client))
+    {
+        ReplyToCommand(client, "User in cooldown");
+        return Plugin_Handled;
+    }
+
+    if(GetConVarBool(g_Cvar_MapVotesVotingEnabled))
+    {
+        ReplyToCommand(client, "Voting not enabled");
+        return Plugin_Handled;
+    }
+
     HaveNotVoted();
 
     return Plugin_Handled;
@@ -262,7 +339,10 @@ public HTTPRequestHandle:CreateMapVotesRequest(const String:route[])
     Format(url, sizeof(url),
             "%s%s%s", base_url, (!check ? "/" : ""), route);
 
-    return Steam_CreateHTTPRequest(HTTPMethod_POST, url);
+    new HTTPRequestHandle:request = Steam_CreateHTTPRequest(HTTPMethod_POST, url);
+    SetAccessCode(request);
+
+    return request;
 }
 
 public Steam_SetHTTPRequestGetOrPostParameterInt(&HTTPRequestHandle:request, const String:param[], value)
@@ -270,6 +350,29 @@ public Steam_SetHTTPRequestGetOrPostParameterInt(&HTTPRequestHandle:request, con
     String[64] tmp;
     IntToString(value, tmp, sizeof(tmp));
     Steam_SetHTTPRequestGetOrPostParameter(request, param, tmp);
+}
+
+public StartCooldown(client)
+{
+    //Ignore the server console
+    if (client == 0)
+        return;
+
+    g_IsInCooldown[client] = true;
+    CreateTimer(GetConVarFloat(g_Cvar_MapVotesRequestCooldown), RemoveCooldown);
+}
+
+public bool:IsClientInCooldown(client)
+{
+    if(client == 0)
+        return false;
+    else
+        return g_IsInCooldown[client];
+}
+
+public Action:RemoveCooldown(Handle:timer, any:client)
+{
+    g_IsInCooldown[client] = false;
 }
 
 public WriteMessage(client, String:message[256])
@@ -290,8 +393,8 @@ public WriteMessage(client, String:message[256])
 	Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
 	Steam_SetHTTPRequestGetOrPostParameter(request, "comment", base64_url);
 	Steam_SetHTTPRequestGetOrPostParameter(request, "base64", "1");
-    SetAccessCode(request);
     Steam_SendHTTPRequest(request, ReceiveWriteMessage, GetClientUserId(client));
+    StartCooldown(client);
 }
 
 public ReceiveWriteMessage(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
@@ -300,7 +403,7 @@ public ReceiveWriteMessage(HTTPRequestHandle:request, bool:successful, HTTPStatu
 
     if(client && successful)
     {
-        PrintToChat(client, "[MapVotes] Comment Added");
+        ReplyToCommand(client, "[MapVotes] Comment Added");
     }
 
 	Steam_ReleaseHTTPRequest(request);
@@ -322,8 +425,8 @@ public CastVote(client, value)
         Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
         Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
         Steam_SetHTTPRequestGetOrPostParameterInt(request, "value", value);
-        SetAccessCode(request);
         Steam_SendHTTPRequest(request, ReceiveCastVote, GetClientUserId(client));
+        StartCooldown(client);
     }
 
 }
@@ -334,7 +437,7 @@ public ReceiveCastVote(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
 
     if(client && successful)
     {
-        PrintToChat(client, "[MapVotes] Vote Cast");
+        ReplyToCommand(client, "[MapVotes] Vote Cast");
     }
 
 	Steam_ReleaseHTTPRequest(request);
@@ -355,8 +458,8 @@ public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
 
     Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
     Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
-    SetAccessCode(request);
     Steam_SendHTTPRequest(request, ReceiveFavorite, GetClientUserId(client));
+    StartCooldown(client);
 }
 
 public ReceiveFavorite(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
@@ -365,7 +468,7 @@ public ReceiveFavorite(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
 
     if(client && successful)
     {
-        PrintToChat(client, "[MapVotes] Updated Favorites");
+        ReplyToCommand(client, "[MapVotes] Updated Favorites");
     }
 
 	Steam_ReleaseHTTPRequest(request);
@@ -438,8 +541,8 @@ public GetFavorites(client)
     new HTTPRequestHandle:request = CreateMapVotesRequest(GET_FAVORITES_ROUTE);
     Steam_SetHTTPRequestGetOrPostParameterInt(request, "player", GetClientUserId(client));
     Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
-    SetAccessCode(request);
     Steam_SendHTTPRequest(request, ReceiveGetFavorites, GetClientUserId(client));
+    StartCooldown(client);
 }
 
 public ReceiveGetFavorites(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
@@ -486,7 +589,7 @@ public ReceiveGetFavorites(HTTPRequestHandle:request, bool:successful, HTTPStatu
         SetMenuTitle(menu, "Favorited Maps");
         DisplayMenu(menu, client, MENU_TIME_FOREVER);
     }else{
-        PrintToChat(client, "[MapVotes] You have no favorited maps that are on this server.");
+        ReplyToCommand(client, "[MapVotes] You have no favorited maps that are on this server.");
     }
 }
 
@@ -562,7 +665,6 @@ public HaveNotVoted()
         Steam_SetHTTPRequestGetOrPostParameterInt(request, "players", player);
     }
 
-    SetAccessCode(request);
     Steam_SendHTTPRequest(request, ReceiveHaveNotVoted, 0);
 }
 
@@ -616,7 +718,6 @@ public Action:Test(client, args)
     new HTTPRequestHandle:request = CreateMapVotesRequest(GET_FAVORITES_ROUTE);
     Steam_SetHTTPRequestGetOrPostParameterInt(request, "player", 7);
     Steam_SetHTTPRequestGetOrPostParameter(request, "uid",  "76561197998903004");
-    SetAccessCode(request);
     Steam_SendHTTPRequest(request, ReceiveGetFavorites, 0);
 }
 
