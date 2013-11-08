@@ -116,7 +116,19 @@ public OnAllPluginsLoaded() {
 
 public Action:Command_VoteMenu(client, args)
 {
-    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
+    if(IsClientInCooldown(client))
+    {
+        ReplyToCommand(client, "User in cooldown");
+        return Plugin_Handled;
+    }
+
+    if(GetConVarBool(g_Cvar_MapVotesVotingEnabled))
+    {
+        ReplyToCommand(client, "Voting not enabled");
+        return Plugin_Handled;
+    }
+
+    if(client && IsClientAuthorized(client)){
         CallVoteOnClient(client);
     }
 
@@ -125,7 +137,19 @@ public Action:Command_VoteMenu(client, args)
 
 public Action:Command_VoteUp(client, args)
 {
-    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
+    if(IsClientInCooldown(client))
+    {
+        ReplyToCommand(client, "User in cooldown");
+        return Plugin_Handled;
+    }
+
+    if(GetConVarBool(g_Cvar_MapVotesVotingEnabled))
+    {
+        ReplyToCommand(client, "Voting not enabled");
+        return Plugin_Handled;
+    }
+
+    if(client && IsClientAuthorized(client)){
         CastVote(client, 1);
     }
 
@@ -134,7 +158,19 @@ public Action:Command_VoteUp(client, args)
 
 public Action:Command_VoteDown(client, args)
 {
-    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
+    if(IsClientInCooldown(client))
+    {
+        ReplyToCommand(client, "User in cooldown");
+        return Plugin_Handled;
+    }
+
+    if(GetConVarBool(g_Cvar_MapVotesVotingEnabled))
+    {
+        ReplyToCommand(client, "Voting not enabled");
+        return Plugin_Handled;
+    }
+
+    if(client && IsClientAuthorized(client)){
         CastVote(client, -1);
     }
 
@@ -143,7 +179,13 @@ public Action:Command_VoteDown(client, args)
 
 public Action:Command_Favorite(client, args)
 {
-    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
+    if(IsClientInCooldown(client))
+    {
+        ReplyToCommand(client, "User in cooldown");
+        return Plugin_Handled;
+    }
+
+    if(client && IsClientAuthorized(client)){
         new String:map[PLATFORM_MAX_PATH];
         if (args <= 0)
         {
@@ -159,7 +201,13 @@ public Action:Command_Favorite(client, args)
 }
 public Action:Command_Unfavorite(client, args)
 {
-    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
+    if(IsClientInCooldown(client))
+    {
+        ReplyToCommand(client, "User in cooldown");
+        return Plugin_Handled;
+    }
+
+    if(client && IsClientAuthorized(client)){
         new String:map[PLATFORM_MAX_PATH];
         if (args <= 0)
         {
@@ -176,7 +224,13 @@ public Action:Command_Unfavorite(client, args)
 }
 public Action:Command_GetFavorites(client, args)
 {
-    if(client && IsClientAuthorized(client) && GetConVarBool(g_Cvar_MapVotesVotingEnabled)){
+    if(IsClientInCooldown(client))
+    {
+        ReplyToCommand(client, "User in cooldown");
+        return Plugin_Handled;
+    }
+
+    if(client && IsClientAuthorized(client)){
         GetFavorites(client);
     }
 
@@ -194,8 +248,15 @@ public Action:Command_ViewMap(client, args)
 
 public Action:Command_MapComment(client, args)
 {
+    if(IsClientInCooldown(client))
+    {
+        ReplyToCommand(client, "User in cooldown");
+        return Plugin_Handled;
+    }
+
     if (!GetConVarBool(g_Cvar_MapVotesCommentingEnabled))
     {
+        ReplyToCommand(client, "Commenting not enabled");
         return Plugin_Handled;
     }
 
@@ -216,6 +277,18 @@ public Action:Command_MapComment(client, args)
 
 public Action:Command_HaveNotVoted(client, args)
 {
+    if(IsClientInCooldown(client))
+    {
+        ReplyToCommand(client, "User in cooldown");
+        return Plugin_Handled;
+    }
+
+    if(GetConVarBool(g_Cvar_MapVotesVotingEnabled))
+    {
+        ReplyToCommand(client, "Voting not enabled");
+        return Plugin_Handled;
+    }
+
     HaveNotVoted();
 
     return Plugin_Handled;
