@@ -403,7 +403,7 @@ public ReceiveWriteMessage(HTTPRequestHandle:request, bool:successful, HTTPStatu
 
     if(client && successful)
     {
-        PrintToChat(client, "[MapVotes] Comment Added");
+        ReplyToCommand(client, "[MapVotes] Comment Added");
     }
 
 	Steam_ReleaseHTTPRequest(request);
@@ -437,7 +437,7 @@ public ReceiveCastVote(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
 
     if(client && successful)
     {
-        PrintToChat(client, "[MapVotes] Vote Cast");
+        ReplyToCommand(client, "[MapVotes] Vote Cast");
     }
 
 	Steam_ReleaseHTTPRequest(request);
@@ -468,7 +468,7 @@ public ReceiveFavorite(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
 
     if(client && successful)
     {
-        PrintToChat(client, "[MapVotes] Updated Favorites");
+        ReplyToCommand(client, "[MapVotes] Updated Favorites");
     }
 
 	Steam_ReleaseHTTPRequest(request);
@@ -589,7 +589,7 @@ public ReceiveGetFavorites(HTTPRequestHandle:request, bool:successful, HTTPStatu
         SetMenuTitle(menu, "Favorited Maps");
         DisplayMenu(menu, client, MENU_TIME_FOREVER);
     }else{
-        PrintToChat(client, "[MapVotes] You have no favorited maps that are on this server.");
+        ReplyToCommand(client, "[MapVotes] You have no favorited maps that are on this server.");
     }
 }
 
