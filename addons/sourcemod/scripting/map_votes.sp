@@ -262,7 +262,10 @@ public HTTPRequestHandle:CreateMapVotesRequest(const String:route[])
     Format(url, sizeof(url),
             "%s%s%s", base_url, (!check ? "/" : ""), route);
 
-    return Steam_CreateHTTPRequest(HTTPMethod_POST, url);
+    new HTTPRequestHandle:request = Steam_CreateHTTPRequest(HTTPMethod_POST, url);
+    SetAccessCode(request);
+
+    return request;
 }
 
 public Steam_SetHTTPRequestGetOrPostParameterInt(&HTTPRequestHandle:request, const String:param[], value)
@@ -290,7 +293,6 @@ public WriteMessage(client, String:message[256])
 	Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
 	Steam_SetHTTPRequestGetOrPostParameter(request, "comment", base64_url);
 	Steam_SetHTTPRequestGetOrPostParameter(request, "base64", "1");
-    SetAccessCode(request);
     Steam_SendHTTPRequest(request, ReceiveWriteMessage, GetClientUserId(client));
 }
 
@@ -322,7 +324,6 @@ public CastVote(client, value)
         Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
         Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
         Steam_SetHTTPRequestGetOrPostParameterInt(request, "value", value);
-        SetAccessCode(request);
         Steam_SendHTTPRequest(request, ReceiveCastVote, GetClientUserId(client));
     }
 
@@ -355,7 +356,6 @@ public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
 
     Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
     Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
-    SetAccessCode(request);
     Steam_SendHTTPRequest(request, ReceiveFavorite, GetClientUserId(client));
 }
 
@@ -438,7 +438,6 @@ public GetFavorites(client)
     new HTTPRequestHandle:request = CreateMapVotesRequest(GET_FAVORITES_ROUTE);
     Steam_SetHTTPRequestGetOrPostParameterInt(request, "player", GetClientUserId(client));
     Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
-    SetAccessCode(request);
     Steam_SendHTTPRequest(request, ReceiveGetFavorites, GetClientUserId(client));
 }
 
@@ -562,7 +561,6 @@ public HaveNotVoted()
         Steam_SetHTTPRequestGetOrPostParameterInt(request, "players", player);
     }
 
-    SetAccessCode(request);
     Steam_SendHTTPRequest(request, ReceiveHaveNotVoted, 0);
 }
 
@@ -616,7 +614,6 @@ public Action:Test(client, args)
     new HTTPRequestHandle:request = CreateMapVotesRequest(GET_FAVORITES_ROUTE);
     Steam_SetHTTPRequestGetOrPostParameterInt(request, "player", 7);
     Steam_SetHTTPRequestGetOrPostParameter(request, "uid",  "76561197998903004");
-    SetAccessCode(request);
     Steam_SendHTTPRequest(request, ReceiveGetFavorites, 0);
 }
 
