@@ -394,6 +394,7 @@ public WriteMessage(client, String:message[256])
 	Steam_SetHTTPRequestGetOrPostParameter(request, "comment", base64_url);
 	Steam_SetHTTPRequestGetOrPostParameter(request, "base64", "1");
     Steam_SendHTTPRequest(request, ReceiveWriteMessage, GetClientUserId(client));
+    StartCooldown(client);
 }
 
 public ReceiveWriteMessage(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
@@ -425,6 +426,7 @@ public CastVote(client, value)
         Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
         Steam_SetHTTPRequestGetOrPostParameterInt(request, "value", value);
         Steam_SendHTTPRequest(request, ReceiveCastVote, GetClientUserId(client));
+        StartCooldown(client);
     }
 
 }
@@ -457,6 +459,7 @@ public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
     Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
     Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
     Steam_SendHTTPRequest(request, ReceiveFavorite, GetClientUserId(client));
+    StartCooldown(client);
 }
 
 public ReceiveFavorite(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
@@ -539,6 +542,7 @@ public GetFavorites(client)
     Steam_SetHTTPRequestGetOrPostParameterInt(request, "player", GetClientUserId(client));
     Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
     Steam_SendHTTPRequest(request, ReceiveGetFavorites, GetClientUserId(client));
+    StartCooldown(client);
 }
 
 public ReceiveGetFavorites(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
