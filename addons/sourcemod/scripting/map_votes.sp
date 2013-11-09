@@ -365,7 +365,7 @@ public StartCooldown(client)
         return;
 
     g_IsInCooldown[client] = true;
-    CreateTimer(GetConVarFloat(g_Cvar_MapVotesRequestCooldownTime), RemoveCooldown);
+    CreateTimer(GetConVarFloat(g_Cvar_MapVotesRequestCooldownTime), RemoveCooldown, client);
 }
 
 public bool:IsClientInCooldown(client)
