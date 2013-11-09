@@ -87,6 +87,7 @@ public OnPluginStart()
     RegAdminCmd("sm_have_not_voted", Command_HaveNotVoted, ADMFLAG_VOTE, "Popup a vote panel to every player on the server that has not yet voted on this map");
 
     RegConsoleCmd("test", Test, "Test function");
+    RegConsoleCmd("readme", Readme, "View Readme");
 
     new array_size = ByteCountToCells(PLATFORM_MAX_PATH);        
     g_MapList = CreateArray(array_size);
@@ -290,7 +291,7 @@ public Action:Command_HaveNotVoted(client, args)
         return Plugin_Handled;
     }
 
-    HaveNotVoted();
+    HaveNotVoted(client);
 
     return Plugin_Handled;
 }
@@ -333,11 +334,16 @@ public HTTPRequestHandle:CreateMapVotesRequest(const String:route[])
 {
     decl String:base_url[256], String:url[512];
     GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
-
-    //check for forward slash after base_url;
     TrimString(base_url);
     new trim_length = strlen(base_url) - 1;
 
+    if(trim_length < 0)
+    {
+        //MapVotes Url not set
+        return INVALID_HTTP_HANDLE;
+    }
+
+    //check for forward slash after base_url;
     if(base_url[trim_length] == '/')
     {
         strcopy(base_url, trim_length + 1, base_url);
@@ -396,6 +402,13 @@ public WriteMessage(client, String:message[256])
     GetCurrentMap(map, sizeof(map));
 
     new HTTPRequestHandle:request = CreateMapVotesRequest(WRITE_MESSAGE_ROUTE);
+
+    if(request == INVALID_HTTP_HANDLE)
+    {
+        ReplyToCommand(client, "sm_map_votes_url invalid; cannot create HTTP request");
+        return;
+    }
+
     Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
     Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
     Steam_SetHTTPRequestGetOrPostParameter(request, "comment", base64_url);
@@ -429,6 +442,13 @@ public CastVote(client, value)
         GetCurrentMap(map, sizeof(map));
 
         new HTTPRequestHandle:request = CreateMapVotesRequest(CAST_VOTE_ROUTE);
+
+        if(request == INVALID_HTTP_HANDLE)
+        {
+            ReplyToCommand(client, "sm_map_votes_url invalid; cannot create HTTP request");
+            return;
+        }
+
         Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
         Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
         Steam_SetHTTPRequestGetOrPostParameterInt(request, "value", value);
@@ -462,6 +482,13 @@ public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
     }else{
         request = CreateMapVotesRequest(UNFAVORITE_ROUTE);
     }
+
+    if(request == INVALID_HTTP_HANDLE)
+    {
+        ReplyToCommand(client, "sm_map_votes_url invalid; cannot create HTTP request");
+        return;
+    }
+
 
     Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
     Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
@@ -546,6 +573,13 @@ public GetFavorites(client)
     Steam_GetCSteamIDForClient(client, uid, sizeof(uid));
 
     new HTTPRequestHandle:request = CreateMapVotesRequest(GET_FAVORITES_ROUTE);
+
+    if(request == INVALID_HTTP_HANDLE)
+    {
+        ReplyToCommand(client, "sm_map_votes_url invalid; cannot create HTTP request");
+        return;
+    }
+
     Steam_SetHTTPRequestGetOrPostParameterInt(request, "player", GetClientUserId(client));
     Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
     Steam_SendHTTPRequest(request, ReceiveGetFavorites, GetClientUserId(client));
@@ -653,12 +687,19 @@ public VoteMenuHandler(Handle:menu, MenuAction:action, param1, param2)
     }
 }
 
-public HaveNotVoted()
+public HaveNotVoted(caller)
 {
     decl String:uid[MAX_COMMUNITYID_LENGTH];
     decl String:map[PLATFORM_MAX_PATH];
     new player;
     new HTTPRequestHandle:request = CreateMapVotesRequest(HAVE_NOT_VOTED_ROUTE);
+
+    if(request == INVALID_HTTP_HANDLE)
+    {
+        ReplyToCommand(caller, "sm_map_votes_url invalid; cannot create HTTP request");
+        return;
+    }
+
 
     GetCurrentMap(map, sizeof(map));
     Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
@@ -676,7 +717,7 @@ public HaveNotVoted()
         Steam_SetHTTPRequestGetOrPostParameterInt(request, "players", player);
     }
 
-    Steam_SendHTTPRequest(request, ReceiveHaveNotVoted, 0);
+    Steam_SendHTTPRequest(request, ReceiveHaveNotVoted, caller);
 }
 
 public ReceiveHaveNotVoted(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid)
@@ -727,12 +768,22 @@ public ViewMap(client)
 
 }
 
-
+public Action:Readme(client, args)
+{
+    ShowMOTDPanel(client, "README.md", "https://github.com/CrimsonTautology/sm_map_votes/blob/master/README.md", MOTDPANEL_TYPE_URL);
+}
 
 public Action:Test(client, args)
 {
     //MapVotesCall(GET_FAVORITES_ROUTE, query_params, 0, ReceiveGetFavorites);
     new HTTPRequestHandle:request = CreateMapVotesRequest(GET_FAVORITES_ROUTE);
+
+    if(request == INVALID_HTTP_HANDLE)
+    {
+        ReplyToCommand(client, "sm_map_votes_url invalid; cannot create HTTP request");
+        return;
+    }
+
     Steam_SetHTTPRequestGetOrPostParameterInt(request, "player", 7);
     Steam_SetHTTPRequestGetOrPostParameter(request, "uid",  "76561197998903004");
     Steam_SendHTTPRequest(request, ReceiveGetFavorites, 0);
