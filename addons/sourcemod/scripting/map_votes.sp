@@ -91,6 +91,7 @@ public OnPluginStart()
     new array_size = ByteCountToCells(PLATFORM_MAX_PATH);        
     g_MapList = CreateArray(array_size);
     g_MapTrie = CreateTrie();
+    BuildMapListAndTrie();
 }
 
 public OnConfigsExecuted()
@@ -575,16 +576,19 @@ public ReceiveGetFavorites(HTTPRequestHandle:request, bool:successful, HTTPStatu
     new Handle:maps = json_object_get(json, "maps");
     new String:map_buffer[PLATFORM_MAX_PATH];
     new junk;
+    new bool:found;
 
-    new Handle:menu = CreateMenu(NominateMapHandler);
+    new Handle:menu = CreateMenu(NominateMapHandler, MENU_ACTIONS_DEFAULT|MenuAction_DrawItem|MenuAction_DisplayItem);
 
     for(new i = 0; i < json_array_size(maps); i++)
     {
         json_array_get_string(maps, i, map_buffer, sizeof(map_buffer));
-        if(GetTrieValue(g_MapTrie, map_buffer, junk))
+        TrimString(map_buffer);
+        found = GetTrieValue(g_MapTrie, map_buffer, junk);
+        ReplyToCommand(client, "json[%d](%d)(%d):%s:", i, found, junk, map_buffer);//TODO
+        if(found)
         {
             AddMenuItem(menu, map_buffer, map_buffer);
-            ReplyToCommand(client, "%s", map_buffer);//TODO
         }
     }
 
@@ -722,6 +726,7 @@ public ViewMap(client)
     ShowMOTDPanel(client, "Map Viewer", url, MOTDPANEL_TYPE_URL);
 
 }
+
 
 
 public Action:Test(client, args)
