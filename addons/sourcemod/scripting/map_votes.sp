@@ -61,7 +61,7 @@ new Function:g_Handler_MapSelectMenu = INVALID_FUNCTION;
 public OnPluginStart()
 {
 
-    g_Cvar_MapVotesUrl = CreateConVar("sm_map_votes_url", "", "URL to your Map Votes web page");
+    g_Cvar_MapVotesUrl = CreateConVar("sm_map_votes_url", "", "URL to your Map Votes web page.  Remeber the \"http://\" part and to quote the entire url!");
     g_Cvar_MapVotesPort = CreateConVar("sm_map_votes_port", "80", "HTTP Port used");
     g_Cvar_MapVotesApiKey = CreateConVar("sm_map_votes_api_key", "", "The API key you generated to interact with the Map Votes web page");
     g_Cvar_MapVotesVotingEnabled = CreateConVar("sm_map_votes_voting_enabled", "1", "Whether players are allowed to vote on the current map");
@@ -86,7 +86,7 @@ public OnPluginStart()
 
     RegAdminCmd("sm_have_not_voted", Command_HaveNotVoted, ADMFLAG_VOTE, "Popup a vote panel to every player on the server that has not yet voted on this map");
 
-    //RegConsoleCmd("test", Test, "Test function");
+    RegConsoleCmd("test", Test, "Test function");
 
     new array_size = ByteCountToCells(PLATFORM_MAX_PATH);        
     g_MapList = CreateArray(array_size);
@@ -122,7 +122,7 @@ public Action:Command_VoteMenu(client, args)
         return Plugin_Handled;
     }
 
-    if(GetConVarBool(g_Cvar_MapVotesVotingEnabled))
+    if(!GetConVarBool(g_Cvar_MapVotesVotingEnabled))
     {
         ReplyToCommand(client, "Voting not enabled");
         return Plugin_Handled;
@@ -143,7 +143,7 @@ public Action:Command_VoteUp(client, args)
         return Plugin_Handled;
     }
 
-    if(GetConVarBool(g_Cvar_MapVotesVotingEnabled))
+    if(!GetConVarBool(g_Cvar_MapVotesVotingEnabled))
     {
         ReplyToCommand(client, "Voting not enabled");
         return Plugin_Handled;
@@ -164,7 +164,7 @@ public Action:Command_VoteDown(client, args)
         return Plugin_Handled;
     }
 
-    if(GetConVarBool(g_Cvar_MapVotesVotingEnabled))
+    if(!GetConVarBool(g_Cvar_MapVotesVotingEnabled))
     {
         ReplyToCommand(client, "Voting not enabled");
         return Plugin_Handled;
@@ -283,7 +283,7 @@ public Action:Command_HaveNotVoted(client, args)
         return Plugin_Handled;
     }
 
-    if(GetConVarBool(g_Cvar_MapVotesVotingEnabled))
+    if(!GetConVarBool(g_Cvar_MapVotesVotingEnabled))
     {
         ReplyToCommand(client, "Voting not enabled");
         return Plugin_Handled;
@@ -333,11 +333,17 @@ public HTTPRequestHandle:CreateMapVotesRequest(const String:route[])
     decl String:base_url[256], String:url[512];
     GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
 
-    //TODO - check for forward slash after base_url;
-    new bool:check =  (FindCharInString(base_url, '/', true) == sizeof(base_url) - 1);
+    //check for forward slash after base_url;
+    TrimString(base_url);
+    new trim_length = strlen(base_url) - 1;
+
+    if(base_url[trim_length] == '/')
+    {
+        strcopy(base_url, trim_length + 1, base_url);
+    }
 
     Format(url, sizeof(url),
-            "%s%s%s", base_url, (!check ? "/" : ""), route);
+            "%s%s", base_url, route);
 
     new HTTPRequestHandle:request = Steam_CreateHTTPRequest(HTTPMethod_POST, url);
     SetAccessCode(request);
@@ -548,7 +554,7 @@ public GetFavorites(client)
 public ReceiveGetFavorites(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid)
 {
     new client = GetClientOfUserId(userid);
-    if(!client)
+    if(false && !client)//TODO
     {
         //User logged off
         Steam_ReleaseHTTPRequest(request);
@@ -556,7 +562,7 @@ public ReceiveGetFavorites(HTTPRequestHandle:request, bool:successful, HTTPStatu
     }
     if(!successful || code != HTTPStatusCode_OK)
     {
-        LogError("[MapVotes] Error at RecivedGetFavorites (HTTP Code %d)", code);
+        LogError("[MapVotes] Error at RecivedGetFavorites (HTTP Code %d; success %d)", code, successful);
         Steam_ReleaseHTTPRequest(request);
         return;
     }
@@ -578,6 +584,7 @@ public ReceiveGetFavorites(HTTPRequestHandle:request, bool:successful, HTTPStatu
         if(GetTrieValue(g_MapTrie, map_buffer, junk))
         {
             AddMenuItem(menu, map_buffer, map_buffer);
+            ReplyToCommand(client, "%s", map_buffer);//TODO
         }
     }
 
@@ -700,12 +707,17 @@ public ViewMap(client)
     decl String:map[PLATFORM_MAX_PATH], String:url[256], String:base_url[128];
     GetCurrentMap(map, sizeof(map));
     GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
-    //TODO
-    ReplaceString(base_url, sizeof(base_url), "http://", "", false);
-    ReplaceString(base_url, sizeof(base_url), "https://", "", false);
+
+    TrimString(base_url);
+    new trim_length = strlen(base_url) - 1;
+
+    if(base_url[trim_length] == '/')
+    {
+        strcopy(base_url, trim_length + 1, base_url);
+    }
 
     Format(url, sizeof(url),
-            "http://%s%s/%s", base_url, MAPS_ROUTE, map);
+            "%s%s/%s", base_url, MAPS_ROUTE, map);
 
     ShowMOTDPanel(client, "Map Viewer", url, MOTDPANEL_TYPE_URL);
 
