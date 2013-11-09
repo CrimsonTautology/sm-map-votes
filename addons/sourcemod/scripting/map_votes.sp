@@ -48,7 +48,7 @@ new Handle:g_Cvar_MapVotesCommentingEnabled = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesNominationsName = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesRequestCooldownTime = INVALID_HANDLE;
 
-new bool:g_IsInCooldown[MaxClients+1];
+new bool:g_IsInCooldown[MAXPLAYERS+1];
 
 new g_MapFileSerial = -1;
 new Handle:g_MapList = INVALID_HANDLE;
@@ -86,7 +86,7 @@ public OnPluginStart()
 
     RegAdminCmd("sm_have_not_voted", Command_HaveNotVoted, ADMFLAG_VOTE, "Popup a vote panel to every player on the server that has not yet voted on this map");
 
-    RegConsoleCmd("test", Test);
+    //RegConsoleCmd("test", Test, "Test function");
 
     new array_size = ByteCountToCells(PLATFORM_MAX_PATH);        
     g_MapList = CreateArray(array_size);
@@ -325,7 +325,7 @@ public SetAccessCode(&HTTPRequestHandle:request)
 {
     decl String:api_key[128];
     GetConVarString(g_Cvar_MapVotesApiKey, api_key, sizeof(api_key));
-	Steam_SetHTTPRequestGetOrPostParameter(request, "access_token", api_key);
+    Steam_SetHTTPRequestGetOrPostParameter(request, "access_token", api_key);
 }
 
 public HTTPRequestHandle:CreateMapVotesRequest(const String:route[])
@@ -334,7 +334,7 @@ public HTTPRequestHandle:CreateMapVotesRequest(const String:route[])
     GetConVarString(g_Cvar_MapVotesUrl, base_url, sizeof(base_url));
 
     //TODO - check for forward slash after base_url;
-    bool:check =  FindCharInString(base_url, '/', true) == sizeof(base_url) - 1;
+    new bool:check =  (FindCharInString(base_url, '/', true) == sizeof(base_url) - 1);
 
     Format(url, sizeof(url),
             "%s%s%s", base_url, (!check ? "/" : ""), route);
@@ -347,7 +347,7 @@ public HTTPRequestHandle:CreateMapVotesRequest(const String:route[])
 
 public Steam_SetHTTPRequestGetOrPostParameterInt(&HTTPRequestHandle:request, const String:param[], value)
 {
-    String[64] tmp;
+    new String:tmp[64];
     IntToString(value, tmp, sizeof(tmp));
     Steam_SetHTTPRequestGetOrPostParameter(request, param, tmp);
 }
@@ -359,7 +359,7 @@ public StartCooldown(client)
         return;
 
     g_IsInCooldown[client] = true;
-    CreateTimer(GetConVarFloat(g_Cvar_MapVotesRequestCooldown), RemoveCooldown);
+    CreateTimer(GetConVarFloat(g_Cvar_MapVotesRequestCooldownTime), RemoveCooldown);
 }
 
 public bool:IsClientInCooldown(client)
@@ -389,15 +389,15 @@ public WriteMessage(client, String:message[256])
     GetCurrentMap(map, sizeof(map));
 
     new HTTPRequestHandle:request = CreateMapVotesRequest(WRITE_MESSAGE_ROUTE);
-	Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
-	Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
-	Steam_SetHTTPRequestGetOrPostParameter(request, "comment", base64_url);
-	Steam_SetHTTPRequestGetOrPostParameter(request, "base64", "1");
+    Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
+    Steam_SetHTTPRequestGetOrPostParameter(request, "uid", uid);
+    Steam_SetHTTPRequestGetOrPostParameter(request, "comment", base64_url);
+    Steam_SetHTTPRequestGetOrPostParameter(request, "base64", "1");
     Steam_SendHTTPRequest(request, ReceiveWriteMessage, GetClientUserId(client));
     StartCooldown(client);
 }
 
-public ReceiveWriteMessage(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
+public ReceiveWriteMessage(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid)
 {
     new client = GetClientOfUserId(userid);
 
@@ -406,14 +406,14 @@ public ReceiveWriteMessage(HTTPRequestHandle:request, bool:successful, HTTPStatu
         ReplyToCommand(client, "[MapVotes] Comment Added");
     }
 
-	Steam_ReleaseHTTPRequest(request);
+    Steam_ReleaseHTTPRequest(request);
 }
 
 public CastVote(client, value)
 {
 
     if(!(value == -1 || value == 0 || value == 1)){
-        LogError("[MapVotes] invalid vote value %d (steam_user: %s)", value, uid);
+        LogError("[MapVotes] invalid vote value %d (client: %d)", value, client);
     }else{
         decl String:map[PLATFORM_MAX_PATH];
         decl String:uid[MAX_COMMUNITYID_LENGTH];
@@ -431,7 +431,7 @@ public CastVote(client, value)
 
 }
 
-public ReceiveCastVote(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
+public ReceiveCastVote(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid)
 {
     new client = GetClientOfUserId(userid);
 
@@ -440,7 +440,7 @@ public ReceiveCastVote(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
         ReplyToCommand(client, "[MapVotes] Vote Cast");
     }
 
-	Steam_ReleaseHTTPRequest(request);
+    Steam_ReleaseHTTPRequest(request);
 }
 
 public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
@@ -462,7 +462,7 @@ public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
     StartCooldown(client);
 }
 
-public ReceiveFavorite(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
+public ReceiveFavorite(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid)
 {
     new client = GetClientOfUserId(userid);
 
@@ -471,7 +471,7 @@ public ReceiveFavorite(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
         ReplyToCommand(client, "[MapVotes] Updated Favorites");
     }
 
-	Steam_ReleaseHTTPRequest(request);
+    Steam_ReleaseHTTPRequest(request);
 }
 
 
@@ -545,7 +545,7 @@ public GetFavorites(client)
     StartCooldown(client);
 }
 
-public ReceiveGetFavorites(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
+public ReceiveGetFavorites(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid)
 {
     new client = GetClientOfUserId(userid);
     if(!client)
@@ -560,7 +560,7 @@ public ReceiveGetFavorites(HTTPRequestHandle:request, bool:successful, HTTPStatu
         Steam_ReleaseHTTPRequest(request);
         return;
     }
-    
+
     decl String:data[4096];
     Steam_GetHTTPResponseBodyData(request, data, sizeof(data));
     Steam_ReleaseHTTPRequest(request);
@@ -668,7 +668,7 @@ public HaveNotVoted()
     Steam_SendHTTPRequest(request, ReceiveHaveNotVoted, 0);
 }
 
-public ReceiveHaveNotVoted(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid) {
+public ReceiveHaveNotVoted(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid)
 {
     if(!successful || code != HTTPStatusCode_OK)
     {
@@ -676,13 +676,13 @@ public ReceiveHaveNotVoted(HTTPRequestHandle:request, bool:successful, HTTPStatu
         Steam_ReleaseHTTPRequest(request);
         return;
     }
-    
+
     decl String:data[4096];
     Steam_GetHTTPResponseBodyData(request, data, sizeof(data));
     Steam_ReleaseHTTPRequest(request);
 
-    decl Handle:json = json_load(data);
-    decl Handle:players = json_object_get(json, "players");
+    new Handle:json = json_load(data);
+    new Handle:players = json_object_get(json, "players");
     decl p;
     new String:map_buffer[PLATFORM_MAX_PATH];
 
