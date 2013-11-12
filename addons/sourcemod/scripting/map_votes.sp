@@ -587,7 +587,7 @@ public GetFavorites(client)
 public ReceiveGetFavorites(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid)
 {
     new client = GetClientOfUserId(userid);
-    if(false && !client)//TODO
+    if(!client)
     {
         //User logged off
         Steam_ReleaseHTTPRequest(request);
@@ -617,7 +617,6 @@ public ReceiveGetFavorites(HTTPRequestHandle:request, bool:successful, HTTPStatu
         json_array_get_string(maps, i, map_buffer, sizeof(map_buffer));
         TrimString(map_buffer);
         found = GetTrieValue(g_MapTrie, map_buffer, junk);
-        ReplyToCommand(client, "json[%d](%d)(%d):%s:", i, found, junk, map_buffer);//TODO
         if(found)
         {
             AddMenuItem(menu, map_buffer, map_buffer);
