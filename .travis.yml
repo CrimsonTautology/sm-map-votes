@@ -1,0 +1,11 @@
+language: c
+
+before_script:
+    - wget -O smdrop15.html http://www.sourcemod.net/smdrop/1.5/
+    - FILE=`egrep '"sourcemod-1\.5\..*-hg.*-linux\.tar\.gz"' smdrop15.html | cut -d '"' -f 2 | tail -1`
+    - wget http://www.sourcemod.net/smdrop/1.5/$FILE
+    - tar -xzf $FILE
+    - chmod +x addons/sourcemod/scripting/compile.sh
+
+script:
+    - addons/sourcemod/scripting/compile.sh
