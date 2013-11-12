@@ -1,5 +1,6 @@
 SM_MAP_VOTES
 ===============
+[![Build Status](https://travis-ci.org/CrimsonTautology/sm_map_votes.png?branch=master)](https://travis-ci.org/CrimsonTautology/sm_map_votes)
 Sourcemod Plugin to connect with the [Map Votes API](https://github.com/CrimsonTautology/map_votes).
 
 INSTALLATION:
