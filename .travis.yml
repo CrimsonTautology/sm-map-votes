@@ -6,7 +6,6 @@ before_script:
     - wget http://www.sourcemod.net/smdrop/1.5/$FILE
     - tar -xzf $FILE
     - cd addons/sourcemod/scripting/
-    - chmod +x spcomp
 
 script:
     - ls -ltr
