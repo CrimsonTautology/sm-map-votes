@@ -10,5 +10,6 @@ before_script:
     - chmod +x compile.sh
 
 script:
+    - cd addons/sourcemod/scripting/
     - compile.sh
     - ls ../plugins
