@@ -9,9 +9,7 @@ before_script:
     - chmod +x spcomp
 
 script:
-    - pwd
-    - ls
-    - ./spcomp *.sp
+    - ./spcomp map_votes.sp
 
 after_script:
     - ls *.smx
