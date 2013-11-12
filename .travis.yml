@@ -5,8 +5,10 @@ before_script:
     - FILE=`egrep '"sourcemod-1\.5\..*-hg.*-linux\.tar\.gz"' smdrop15.html | cut -d '"' -f 2 | tail -1`
     - wget http://www.sourcemod.net/smdrop/1.5/$FILE
     - tar -xzf $FILE
-    - chmod +x addons/sourcemod/scripting/spcomp
-    - chmod +x addons/sourcemod/scripting/compile.sh
+    - cd addons/sourcemod/scripting/
+    - chmod +x spcomp
+    - chmod +x compile.sh
 
 script:
-    - addons/sourcemod/scripting/compile.sh
+    - compile.sh
+    - ls ../plugins
