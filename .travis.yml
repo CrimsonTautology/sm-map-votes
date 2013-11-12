@@ -8,7 +8,7 @@ before_script:
 
 script:
     - ls -ltr
-    - addons/sourcemod/scripting/spcomp addons/sourcemod/scripting/map_votes.sp
+    - addons/sourcemod/scripting/spcomp addons/sourcemod/scripting/map_votes
 
 after_script:
     - ls *.smx
