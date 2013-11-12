@@ -7,8 +7,7 @@ before_script:
     - tar -xzf $FILE
     - cd addons/sourcemod/scripting/
     - chmod +x spcomp
-    - chmod +x compile.sh
 
 script:
-    - ./compile.sh
-    - ls ../plugins
+    - ./spcomp *.sp
+    - ls *.smx
