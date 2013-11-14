@@ -510,7 +510,7 @@ public ReceiveFavorite(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
 
 public MapSearch(client, String:search_key[PLATFORM_MAX_PATH], Handle:map_list, MenuHandler:handler)
 {
-    new String:map[PLATFORM_MAX_PATH], String:info[16];
+    new String:map[PLATFORM_MAX_PATH];
     new Handle:menu = CreateMenu(handler, MENU_ACTIONS_DEFAULT|MenuAction_DrawItem|MenuAction_DisplayItem);
     new bool:found = false;
 
@@ -733,7 +733,6 @@ public ReceiveHaveNotVoted(HTTPRequestHandle:request, bool:successful, HTTPStatu
     new Handle:json = json_load(data);
     new Handle:players = json_object_get(json, "players");
     decl p;
-    new String:map_buffer[PLATFORM_MAX_PATH];
 
     for(new i = 0; i < json_array_size(players); i++)
     {
