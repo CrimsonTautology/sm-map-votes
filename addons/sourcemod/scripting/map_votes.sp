@@ -101,8 +101,7 @@ public OnConfigsExecuted()
 public OnAllPluginsLoaded() {
     new String:noms[PLATFORM_MAX_PATH];
     GetConVarString(g_Cvar_MapVotesNominationsName, noms, sizeof(noms));
-    //g_nominations = FindPluginByFile(noms);
-    g_nominations = FindPluginByFile("nominations.smx");
+    g_nominations = FindPluginByFile(noms);
 
     //Check if nominations.smx is both available and currently running
     if(g_nominations == INVALID_HANDLE || GetPluginStatus(g_nominations) != Plugin_Running){
