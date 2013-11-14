@@ -117,13 +117,13 @@ public Action:Command_VoteMenu(client, args)
 {
     if(IsClientInCooldown(client))
     {
-        ReplyToCommand(client, "User in cooldown");
+        ReplyToCommand(client, "[MapVotes] User in cooldown");
         return Plugin_Handled;
     }
 
     if(!GetConVarBool(g_Cvar_MapVotesVotingEnabled))
     {
-        ReplyToCommand(client, "Voting not enabled");
+        ReplyToCommand(client, "[MapVotes] Voting not enabled");
         return Plugin_Handled;
     }
 
@@ -138,13 +138,13 @@ public Action:Command_VoteUp(client, args)
 {
     if(IsClientInCooldown(client))
     {
-        ReplyToCommand(client, "User in cooldown");
+        ReplyToCommand(client, "[MapVotes] User in cooldown");
         return Plugin_Handled;
     }
 
     if(!GetConVarBool(g_Cvar_MapVotesVotingEnabled))
     {
-        ReplyToCommand(client, "Voting not enabled");
+        ReplyToCommand(client, "[MapVotes] Voting not enabled");
         return Plugin_Handled;
     }
 
@@ -159,13 +159,13 @@ public Action:Command_VoteDown(client, args)
 {
     if(IsClientInCooldown(client))
     {
-        ReplyToCommand(client, "User in cooldown");
+        ReplyToCommand(client, "[MapVotes] User in cooldown");
         return Plugin_Handled;
     }
 
     if(!GetConVarBool(g_Cvar_MapVotesVotingEnabled))
     {
-        ReplyToCommand(client, "Voting not enabled");
+        ReplyToCommand(client, "[MapVotes] Voting not enabled");
         return Plugin_Handled;
     }
 
@@ -180,7 +180,7 @@ public Action:Command_Favorite(client, args)
 {
     if(IsClientInCooldown(client))
     {
-        ReplyToCommand(client, "User in cooldown");
+        ReplyToCommand(client, "[MapVotes] User in cooldown");
         return Plugin_Handled;
     }
 
@@ -202,7 +202,7 @@ public Action:Command_Unfavorite(client, args)
 {
     if(IsClientInCooldown(client))
     {
-        ReplyToCommand(client, "User in cooldown");
+        ReplyToCommand(client, "[MapVotes] User in cooldown");
         return Plugin_Handled;
     }
 
@@ -225,7 +225,7 @@ public Action:Command_GetFavorites(client, args)
 {
     if(IsClientInCooldown(client))
     {
-        ReplyToCommand(client, "User in cooldown");
+        ReplyToCommand(client, "[MapVotes] User in cooldown");
         return Plugin_Handled;
     }
 
@@ -249,13 +249,13 @@ public Action:Command_MapComment(client, args)
 {
     if(IsClientInCooldown(client))
     {
-        ReplyToCommand(client, "User in cooldown");
+        ReplyToCommand(client, "[MapVotes] User in cooldown");
         return Plugin_Handled;
     }
 
     if (!GetConVarBool(g_Cvar_MapVotesCommentingEnabled))
     {
-        ReplyToCommand(client, "Commenting not enabled");
+        ReplyToCommand(client, "[MapVotes] Commenting not enabled");
         return Plugin_Handled;
     }
 
@@ -278,13 +278,13 @@ public Action:Command_HaveNotVoted(client, args)
 {
     if(IsClientInCooldown(client))
     {
-        ReplyToCommand(client, "User in cooldown");
+        ReplyToCommand(client, "[MapVotes] User in cooldown");
         return Plugin_Handled;
     }
 
     if(!GetConVarBool(g_Cvar_MapVotesVotingEnabled))
     {
-        ReplyToCommand(client, "Voting not enabled");
+        ReplyToCommand(client, "[MapVotes] Voting not enabled");
         return Plugin_Handled;
     }
 
@@ -402,7 +402,7 @@ public WriteMessage(client, String:message[256])
 
     if(request == INVALID_HTTP_HANDLE)
     {
-        ReplyToCommand(client, "sm_map_votes_url invalid; cannot create HTTP request");
+        ReplyToCommand(client, "[MapVotes] sm_map_votes_url invalid; cannot create HTTP request");
         return;
     }
 
@@ -420,7 +420,7 @@ public ReceiveWriteMessage(HTTPRequestHandle:request, bool:successful, HTTPStatu
 
     if(client && successful)
     {
-        ReplyToCommand(client, "[MapVotes] Comment Added");
+        PrintToChat(client, "[MapVotes] Comment Added");
     }
 
     Steam_ReleaseHTTPRequest(request);
@@ -442,7 +442,7 @@ public CastVote(client, value)
 
         if(request == INVALID_HTTP_HANDLE)
         {
-            ReplyToCommand(client, "sm_map_votes_url invalid; cannot create HTTP request");
+            ReplyToCommand(client, "[MapVotes] sm_map_votes_url invalid; cannot create HTTP request");
             return;
         }
 
@@ -461,7 +461,7 @@ public ReceiveCastVote(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
 
     if(client && successful)
     {
-        ReplyToCommand(client, "[MapVotes] Vote Cast");
+        PrintToChat(client, "[MapVotes] Vote Cast");
     }
 
     Steam_ReleaseHTTPRequest(request);
@@ -482,7 +482,7 @@ public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
 
     if(request == INVALID_HTTP_HANDLE)
     {
-        ReplyToCommand(client, "sm_map_votes_url invalid; cannot create HTTP request");
+        ReplyToCommand(client, "[MapVotes] sm_map_votes_url invalid; cannot create HTTP request");
         return;
     }
 
@@ -499,7 +499,7 @@ public ReceiveFavorite(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
 
     if(client && successful)
     {
-        ReplyToCommand(client, "[MapVotes] Updated Favorites");
+        PrintToChat(client, "[MapVotes] Updated Favorites");
     }
 
     Steam_ReleaseHTTPRequest(request);
@@ -573,7 +573,7 @@ public GetFavorites(client)
 
     if(request == INVALID_HTTP_HANDLE)
     {
-        ReplyToCommand(client, "sm_map_votes_url invalid; cannot create HTTP request");
+        ReplyToCommand(client, "[MapVotes] sm_map_votes_url invalid; cannot create HTTP request");
         return;
     }
 
@@ -692,7 +692,7 @@ public HaveNotVoted(caller)
 
     if(request == INVALID_HTTP_HANDLE)
     {
-        ReplyToCommand(caller, "sm_map_votes_url invalid; cannot create HTTP request");
+        ReplyToCommand(caller, "[MapVotes] sm_map_votes_url invalid; cannot create HTTP request");
         return;
     }
 
@@ -775,7 +775,7 @@ public Action:Test(client, args)
 
     if(request == INVALID_HTTP_HANDLE)
     {
-        ReplyToCommand(client, "sm_map_votes_url invalid; cannot create HTTP request");
+        ReplyToCommand(client, "[MapVotes] sm_map_votes_url invalid; cannot create HTTP request");
         return;
     }
 
