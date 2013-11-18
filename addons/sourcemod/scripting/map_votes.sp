@@ -101,8 +101,7 @@ public OnConfigsExecuted()
 public OnAllPluginsLoaded() {
     new String:noms[PLATFORM_MAX_PATH];
     GetConVarString(g_Cvar_MapVotesNominationsName, noms, sizeof(noms));
-    //g_nominations = FindPluginByFile(noms);
-    g_nominations = FindPluginByFile("nominations.smx");
+    g_nominations = FindPluginByFile(noms);
 
     //Check if nominations.smx is both available and currently running
     if(g_nominations == INVALID_HANDLE || GetPluginStatus(g_nominations) != Plugin_Running){
@@ -118,13 +117,13 @@ public Action:Command_VoteMenu(client, args)
 {
     if(IsClientInCooldown(client))
     {
-        ReplyToCommand(client, "User in cooldown");
+        ReplyToCommand(client, "[MapVotes] User in cooldown");
         return Plugin_Handled;
     }
 
     if(!GetConVarBool(g_Cvar_MapVotesVotingEnabled))
     {
-        ReplyToCommand(client, "Voting not enabled");
+        ReplyToCommand(client, "[MapVotes] Voting not enabled");
         return Plugin_Handled;
     }
 
@@ -139,13 +138,13 @@ public Action:Command_VoteUp(client, args)
 {
     if(IsClientInCooldown(client))
     {
-        ReplyToCommand(client, "User in cooldown");
+        ReplyToCommand(client, "[MapVotes] User in cooldown");
         return Plugin_Handled;
     }
 
     if(!GetConVarBool(g_Cvar_MapVotesVotingEnabled))
     {
-        ReplyToCommand(client, "Voting not enabled");
+        ReplyToCommand(client, "[MapVotes] Voting not enabled");
         return Plugin_Handled;
     }
 
@@ -160,13 +159,13 @@ public Action:Command_VoteDown(client, args)
 {
     if(IsClientInCooldown(client))
     {
-        ReplyToCommand(client, "User in cooldown");
+        ReplyToCommand(client, "[MapVotes] User in cooldown");
         return Plugin_Handled;
     }
 
     if(!GetConVarBool(g_Cvar_MapVotesVotingEnabled))
     {
-        ReplyToCommand(client, "Voting not enabled");
+        ReplyToCommand(client, "[MapVotes] Voting not enabled");
         return Plugin_Handled;
     }
 
@@ -181,7 +180,7 @@ public Action:Command_Favorite(client, args)
 {
     if(IsClientInCooldown(client))
     {
-        ReplyToCommand(client, "User in cooldown");
+        ReplyToCommand(client, "[MapVotes] User in cooldown");
         return Plugin_Handled;
     }
 
@@ -203,7 +202,7 @@ public Action:Command_Unfavorite(client, args)
 {
     if(IsClientInCooldown(client))
     {
-        ReplyToCommand(client, "User in cooldown");
+        ReplyToCommand(client, "[MapVotes] User in cooldown");
         return Plugin_Handled;
     }
 
@@ -226,7 +225,7 @@ public Action:Command_GetFavorites(client, args)
 {
     if(IsClientInCooldown(client))
     {
-        ReplyToCommand(client, "User in cooldown");
+        ReplyToCommand(client, "[MapVotes] User in cooldown");
         return Plugin_Handled;
     }
 
@@ -250,13 +249,13 @@ public Action:Command_MapComment(client, args)
 {
     if(IsClientInCooldown(client))
     {
-        ReplyToCommand(client, "User in cooldown");
+        ReplyToCommand(client, "[MapVotes] User in cooldown");
         return Plugin_Handled;
     }
 
     if (!GetConVarBool(g_Cvar_MapVotesCommentingEnabled))
     {
-        ReplyToCommand(client, "Commenting not enabled");
+        ReplyToCommand(client, "[MapVotes] Commenting not enabled");
         return Plugin_Handled;
     }
 
@@ -279,13 +278,13 @@ public Action:Command_HaveNotVoted(client, args)
 {
     if(IsClientInCooldown(client))
     {
-        ReplyToCommand(client, "User in cooldown");
+        ReplyToCommand(client, "[MapVotes] User in cooldown");
         return Plugin_Handled;
     }
 
     if(!GetConVarBool(g_Cvar_MapVotesVotingEnabled))
     {
-        ReplyToCommand(client, "Voting not enabled");
+        ReplyToCommand(client, "[MapVotes] Voting not enabled");
         return Plugin_Handled;
     }
 
@@ -403,7 +402,7 @@ public WriteMessage(client, String:message[256])
 
     if(request == INVALID_HTTP_HANDLE)
     {
-        ReplyToCommand(client, "sm_map_votes_url invalid; cannot create HTTP request");
+        ReplyToCommand(client, "[MapVotes] sm_map_votes_url invalid; cannot create HTTP request");
         return;
     }
 
@@ -421,7 +420,7 @@ public ReceiveWriteMessage(HTTPRequestHandle:request, bool:successful, HTTPStatu
 
     if(client && successful)
     {
-        ReplyToCommand(client, "[MapVotes] Comment Added");
+        PrintToChat(client, "[MapVotes] Comment Added");
     }
 
     Steam_ReleaseHTTPRequest(request);
@@ -443,7 +442,7 @@ public CastVote(client, value)
 
         if(request == INVALID_HTTP_HANDLE)
         {
-            ReplyToCommand(client, "sm_map_votes_url invalid; cannot create HTTP request");
+            ReplyToCommand(client, "[MapVotes] sm_map_votes_url invalid; cannot create HTTP request");
             return;
         }
 
@@ -462,7 +461,7 @@ public ReceiveCastVote(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
 
     if(client && successful)
     {
-        ReplyToCommand(client, "[MapVotes] Vote Cast");
+        PrintToChat(client, "[MapVotes] Vote Cast");
     }
 
     Steam_ReleaseHTTPRequest(request);
@@ -483,7 +482,7 @@ public Favorite(String:map[PLATFORM_MAX_PATH], client, bool:favorite)
 
     if(request == INVALID_HTTP_HANDLE)
     {
-        ReplyToCommand(client, "sm_map_votes_url invalid; cannot create HTTP request");
+        ReplyToCommand(client, "[MapVotes] sm_map_votes_url invalid; cannot create HTTP request");
         return;
     }
 
@@ -500,7 +499,7 @@ public ReceiveFavorite(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
 
     if(client && successful)
     {
-        ReplyToCommand(client, "[MapVotes] Updated Favorites");
+        PrintToChat(client, "[MapVotes] Updated Favorites");
     }
 
     Steam_ReleaseHTTPRequest(request);
@@ -510,7 +509,7 @@ public ReceiveFavorite(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
 
 public MapSearch(client, String:search_key[PLATFORM_MAX_PATH], Handle:map_list, MenuHandler:handler)
 {
-    new String:map[PLATFORM_MAX_PATH], String:info[16];
+    new String:map[PLATFORM_MAX_PATH];
     new Handle:menu = CreateMenu(handler, MENU_ACTIONS_DEFAULT|MenuAction_DrawItem|MenuAction_DisplayItem);
     new bool:found = false;
 
@@ -574,7 +573,7 @@ public GetFavorites(client)
 
     if(request == INVALID_HTTP_HANDLE)
     {
-        ReplyToCommand(client, "sm_map_votes_url invalid; cannot create HTTP request");
+        ReplyToCommand(client, "[MapVotes] sm_map_votes_url invalid; cannot create HTTP request");
         return;
     }
 
@@ -693,7 +692,7 @@ public HaveNotVoted(caller)
 
     if(request == INVALID_HTTP_HANDLE)
     {
-        ReplyToCommand(caller, "sm_map_votes_url invalid; cannot create HTTP request");
+        ReplyToCommand(caller, "[MapVotes] sm_map_votes_url invalid; cannot create HTTP request");
         return;
     }
 
@@ -733,7 +732,6 @@ public ReceiveHaveNotVoted(HTTPRequestHandle:request, bool:successful, HTTPStatu
     new Handle:json = json_load(data);
     new Handle:players = json_object_get(json, "players");
     decl p;
-    new String:map_buffer[PLATFORM_MAX_PATH];
 
     for(new i = 0; i < json_array_size(players); i++)
     {
@@ -777,7 +775,7 @@ public Action:Test(client, args)
 
     if(request == INVALID_HTTP_HANDLE)
     {
-        ReplyToCommand(client, "sm_map_votes_url invalid; cannot create HTTP request");
+        ReplyToCommand(client, "[MapVotes] sm_map_votes_url invalid; cannot create HTTP request");
         return;
     }
 
