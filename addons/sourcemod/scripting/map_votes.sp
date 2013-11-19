@@ -84,9 +84,6 @@ public OnPluginStart()
 
     RegAdminCmd("sm_have_not_voted", Command_HaveNotVoted, ADMFLAG_VOTE, "Popup a vote panel to every player on the server that has not yet voted on this map");
 
-    RegConsoleCmd("test", Test, "Test function");
-    RegConsoleCmd("readme", Readme, "View Readme");
-
     new array_size = ByteCountToCells(PLATFORM_MAX_PATH);        
     g_MapList = CreateArray(array_size);
     g_MapTrie = CreateTrie();
@@ -761,26 +758,5 @@ public ViewMap(client)
 
     ShowMOTDPanel(client, "Map Viewer", url, MOTDPANEL_TYPE_URL);
 
-}
-
-public Action:Readme(client, args)
-{
-    ShowMOTDPanel(client, "README.md", "https://github.com/CrimsonTautology/sm_map_votes/blob/master/README.md", MOTDPANEL_TYPE_URL);
-}
-
-public Action:Test(client, args)
-{
-    //MapVotesCall(GET_FAVORITES_ROUTE, query_params, 0, ReceiveGetFavorites);
-    new HTTPRequestHandle:request = CreateMapVotesRequest(GET_FAVORITES_ROUTE);
-
-    if(request == INVALID_HTTP_HANDLE)
-    {
-        ReplyToCommand(client, "[MapVotes] sm_map_votes_url invalid; cannot create HTTP request");
-        return;
-    }
-
-    Steam_SetHTTPRequestGetOrPostParameterInt(request, "player", 7);
-    Steam_SetHTTPRequestGetOrPostParameter(request, "uid",  "76561197998903004");
-    Steam_SendHTTPRequest(request, ReceiveGetFavorites, 0);
 }
 
