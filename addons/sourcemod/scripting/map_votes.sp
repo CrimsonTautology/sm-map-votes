@@ -34,6 +34,7 @@ public Plugin:myinfo = {
 #define GET_FAVORITES_ROUTE "/v1/api/get_favorites"
 #define HAVE_NOT_VOTED_ROUTE "/v1/api/have_not_voted"
 #define SERVER_QUERY_ROUTE "/v1/api/server_query"
+#define UPDATE_MAP_PLAY_TIME_ROUTE "/v1/api/update_map_play_time"
 #define MAPS_ROUTE "/maps"
 
 #define MAX_STEAMID_LENGTH 21 
@@ -48,6 +49,8 @@ new Handle:g_Cvar_MapVotesNominationsName = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesRequestCooldownTime = INVALID_HANDLE;
 
 new bool:g_IsInCooldown[MAXPLAYERS+1];
+
+new g_MapStartTimestamp = 0;
 
 new g_MapFileSerial = -1;
 new Handle:g_MapList = INVALID_HANDLE;
@@ -88,6 +91,18 @@ public OnPluginStart()
     g_MapList = CreateArray(array_size);
     g_MapTrie = CreateTrie();
     BuildMapListAndTrie();
+}
+
+public OnMapStart()
+{
+    g_MapStartTimestamp = GetTime();
+}
+
+public OnMapEnd()
+{
+    decl String:map[PLATFORM_MAX_PATH];
+    GetCurrentMap(map, sizeof(map));
+    UpdateMapPlayTime(g_MapStartTimestamp);
 }
 
 public OnConfigsExecuted()
@@ -737,6 +752,45 @@ public ReceiveHaveNotVoted(HTTPRequestHandle:request, bool:successful, HTTPStatu
     }
     CloseHandle(json);
     CloseHandle(players);
+}
+
+public UpdateMapPlayTime(start_time)
+{
+    new time_played = GetTime() - start_time;
+
+    //Reject way off values
+    if(time_played < 0 || time_played > 86400000)
+    {
+        LogError("[MapVotes] cannot update map time played; time_played=%d", time_played);
+        return;
+    }
+
+    decl String:map[PLATFORM_MAX_PATH];
+    GetCurrentMap(map, sizeof(map));
+
+    new HTTPRequestHandle:request = CreateMapVotesRequest(UPDATE_MAP_PLAY_TIME_ROUTE);
+
+    if(request == INVALID_HTTP_HANDLE)
+    {
+        LogError("[MapVotes] sm_map_votes_url invalid; cannot create HTTP request");
+        return;
+    }
+
+    Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
+    Steam_SetHTTPRequestGetOrPostParameterInt(request, "time_played", time_played);
+    Steam_SendHTTPRequest(request, ReceiveUpdateMapPlayTime);
+}
+
+public ReceiveUpdateMapPlayTime(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid)
+{
+    if(!successful || code != HTTPStatusCode_OK)
+    {
+        LogError("[MapVotes] Error at ReceiveUpdateMapPlayTime (HTTP Code %d; success %d)", code, successful);
+        Steam_ReleaseHTTPRequest(request);
+        return;
+    }
+
+    Steam_ReleaseHTTPRequest(request);
 }
 
 public ViewMap(client)
