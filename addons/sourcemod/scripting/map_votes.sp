@@ -107,6 +107,12 @@ public OnMapEnd()
     UpdateMapPlayTime(g_MapStartTimestamp);
 }
 
+//Sourcemod 1.4 support
+public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max) { 
+    MarkNativeAsOptional("GetUserMessageType"); 
+    return APLRes_Success; 
+}  
+
 public OnConfigsExecuted()
 {
     BuildMapListAndTrie();
@@ -336,6 +342,7 @@ BuildMapListAndTrie()
 
 public SetAccessCode(&HTTPRequestHandle:request)
 {
+    //All MapVotes api calls require this code
     decl String:api_key[128];
     GetConVarString(g_Cvar_MapVotesApiKey, api_key, sizeof(api_key));
     Steam_SetHTTPRequestGetOrPostParameter(request, "access_token", api_key);
