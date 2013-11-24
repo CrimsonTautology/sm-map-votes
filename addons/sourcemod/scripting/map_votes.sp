@@ -16,6 +16,7 @@
 #include <steamtools>
 #include <base64>
 #include <smjansson>
+#include <morecolors>
 
 #define PLUGIN_VERSION "0.1"
 
@@ -721,15 +722,18 @@ public HaveNotVoted(caller)
         Steam_GetCSteamIDForClient(client, uid, sizeof(uid));
         player = GetClientUserId(client);
 
-        Steam_SetHTTPRequestGetOrPostParameter(request, "uids", uid);
-        Steam_SetHTTPRequestGetOrPostParameterInt(request, "players", player);
+        Steam_SetHTTPRequestGetOrPostParameter(request, "uids[]", uid);
+        Steam_SetHTTPRequestGetOrPostParameterInt(request, "players[]", player);
     }
 
-    Steam_SendHTTPRequest(request, ReceiveHaveNotVoted, caller);
+    
+    new userid=GetClientUserId(caller);
+    Steam_SendHTTPRequest(request, ReceiveHaveNotVoted, userid);
 }
 
 public ReceiveHaveNotVoted(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid)
 {
+    new client = GetClientOfUserId(userid);
     if(!successful || code != HTTPStatusCode_OK)
     {
         LogError("[MapVotes] Error at RecivedHaveNotVoted (HTTP Code %d)", code);
@@ -745,7 +749,22 @@ public ReceiveHaveNotVoted(HTTPRequestHandle:request, bool:successful, HTTPStatu
     new Handle:players = json_object_get(json, "players");
     decl p;
 
-    for(new i = 0; i < json_array_size(players); i++)
+    new count=json_array_size(players);
+    if(client)
+    {
+        if(count == 0)
+        {
+            PrintToChat(client, "[MapVotes] Everyone has voted on this map.");
+        }else if(count == 1)
+        {
+            PrintToChat(client, "[MapVotes] %d player has not voted.", count);
+        }else
+        {
+            PrintToChat(client, "[MapVotes] %d players have not voted.", count);
+        }
+    }
+
+    for(new i = 0; i < count; i++)
     {
         p = json_array_get_int(players, i);
         CallVoteOnClient(GetClientOfUserId(p));
