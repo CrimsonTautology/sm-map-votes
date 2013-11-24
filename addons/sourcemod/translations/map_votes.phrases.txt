@@ -39,7 +39,7 @@
     "have_not_voted"
     {
         "#format"   "{1:i}"
-        "en"    "{orange}[MapVotes] {i} players have not voted"
+        "en"    "{orange}[MapVotes] {1} players have not voted"
     }
 
     "url_invalid"

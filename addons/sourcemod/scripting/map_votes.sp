@@ -41,7 +41,6 @@ public Plugin:myinfo = {
 #define MAX_STEAMID_LENGTH 21 
 #define MAX_COMMUNITYID_LENGTH 18 
 
-
 new Handle:g_Cvar_MapVotesUrl = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesApiKey = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesVotingEnabled = INVALID_HANDLE;
@@ -97,6 +96,7 @@ public OnPluginStart()
 
 public OnMapStart()
 {
+
     g_MapStartTimestamp = GetTime();
 }
 
@@ -533,7 +533,26 @@ public ReceiveFavorite(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
 
     if(client && successful)
     {
-        CPrintToChat(client, "%t", "updated_favorites");
+        decl String:data[4096];
+        Steam_GetHTTPResponseBodyData(request, data, sizeof(data));
+        Steam_ReleaseHTTPRequest(request);
+
+        new Handle:json = json_load(data);
+        new bool:favorite = json_object_get_bool(json, "favorite");
+        new String:map[PLATFORM_MAX_PATH];
+        json_object_get_string(json, "map", map, sizeof(map));
+        CloseHandle(json);
+
+        new String:name[64];
+        GetClientName(client, name, sizeof(name));
+
+        if (favorite)
+        {
+            CPrintToChatAll("%t", "announce_up_favorite", name, map);
+        }else
+        {
+            CPrintToChat(client, "%t", "updated_favorites");
+        }
     }
 
     Steam_ReleaseHTTPRequest(request);
