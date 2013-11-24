@@ -60,6 +60,12 @@ new Handle:g_nominations = INVALID_HANDLE;
 new Function:g_Handler_MapSelectMenu = INVALID_FUNCTION;
 
 
+//Sourcemod older version support
+public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max) {
+    MarkNativeAsOptional("GetUserMessageType");
+    return APLRes_Success;
+}
+
 public OnPluginStart()
 {
 
@@ -106,12 +112,6 @@ public OnMapEnd()
     GetCurrentMap(map, sizeof(map));
     UpdateMapPlayTime(g_MapStartTimestamp);
 }
-
-//Sourcemod 1.4 support
-public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max) { 
-    MarkNativeAsOptional("GetUserMessageType"); 
-    return APLRes_Success; 
-}  
 
 public OnConfigsExecuted()
 {
