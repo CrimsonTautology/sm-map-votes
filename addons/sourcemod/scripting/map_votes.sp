@@ -484,7 +484,6 @@ public ReceiveCastVote(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
     {
         decl String:data[4096];
         Steam_GetHTTPResponseBodyData(request, data, sizeof(data));
-        Steam_ReleaseHTTPRequest(request);
 
         new Handle:json = json_load(data);
         new value = json_object_get_int(json, "value");
@@ -542,7 +541,6 @@ public ReceiveFavorite(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
     {
         decl String:data[4096];
         Steam_GetHTTPResponseBodyData(request, data, sizeof(data));
-        Steam_ReleaseHTTPRequest(request);
 
         new Handle:json = json_load(data);
         new bool:favorite = json_object_get_bool(json, "favorite");
