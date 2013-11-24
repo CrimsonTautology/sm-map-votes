@@ -548,7 +548,7 @@ public ReceiveFavorite(HTTPRequestHandle:request, bool:successful, HTTPStatusCod
 
         if (favorite)
         {
-            CPrintToChatAll("%t", "announce_up_favorite", name, map);
+            CPrintToChatAll("%t", "announce_favorite", name, map);
         }else
         {
             CPrintToChat(client, "%t", "updated_favorites");
