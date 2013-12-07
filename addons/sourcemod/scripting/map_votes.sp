@@ -50,7 +50,7 @@ new Handle:g_Cvar_MapVotesRequestCooldownTime = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesCallAutoVoteTime = INVALID_HANDLE;
 
 new g_ClientCooldown[MAXPLAYERS+1];
-new g_ClientMapStartTime[MAXPLAYERS+1];
+new g_ClientMapStartTimestamp[MAXPLAYERS+1];
 
 new g_MapStartTimestamp = 0;
 
@@ -99,6 +99,8 @@ public OnPluginStart()
 
     RegConsoleCmd("sm_test", Command_Test, "TODO - TEST");//TODO
 
+    HookEvent("round_start", Event_RoundStart);
+    HookEvent("teamplay_round_start", Event_RoundStart);
     new array_size = ByteCountToCells(PLATFORM_MAX_PATH);        
     g_MapList = CreateArray(array_size);
     g_MapTrie = CreateTrie();
@@ -116,6 +118,11 @@ public OnMapEnd()
     decl String:map[PLATFORM_MAX_PATH];
     GetCurrentMap(map, sizeof(map));
     UpdateMapPlayTime(g_MapStartTimestamp);
+}
+
+public OnClientPutInServer(client)
+{
+    g_ClientMapStartTimestamp[client] = GetTime();
 }
 
 public OnConfigsExecuted()
@@ -313,9 +320,16 @@ public Action:Command_HaveNotVoted(client, args)
         return Plugin_Handled;
     }
 
-    HaveNotVoted(client);
+    HaveNotVoted(client, 0);
 
     return Plugin_Handled;
+}
+
+public Action:Event_RoundStart(Handle:event, const String:name[], bool:dontBroadcast)
+{
+    //TODO
+    PrintToChatAll("Event_RoundStart");
+    HaveNotVoted(0, GetConVarInt(g_Cvar_MapVotesCallAutoVoteTime));
 }
 
 
@@ -404,6 +418,14 @@ public bool:IsClientInCooldown(client)
         return false;
     else
         return g_ClientCooldown[client] > GetTime();
+}
+
+public bool:ClientHasPlayedMapLongerThan(client, min_play_time)
+{
+    if (min_play_time <=0)
+        return true;
+
+    return GetTime() - g_ClientMapStartTimestamp[client] > min_play_time;
 }
 
 public WriteMessage(client, String:message[256])
@@ -741,7 +763,7 @@ public VoteMenuHandler(Handle:menu, MenuAction:action, param1, param2)
     }
 }
 
-public HaveNotVoted(caller)
+public HaveNotVoted(caller, min_play_time)
 {
     decl String:uid[MAX_COMMUNITYID_LENGTH];
     decl String:map[PLATFORM_MAX_PATH];
@@ -766,19 +788,34 @@ public HaveNotVoted(caller)
         {
             continue;
         }
+
+        if(!ClientHasPlayedMapLongerThan(client, min_play_time))
+        {
+            continue;
+        }
         Steam_GetCSteamIDForClient(client, uid, sizeof(uid));
         player = GetClientUserId(client);
 
         Format(tmp, sizeof(tmp), "uids[%d]", i);
-        Steam_SetHTTPRequestGetOrPostParameter(request, "uids[]", uid);
+        Steam_SetHTTPRequestGetOrPostParameter(request, tmp, uid);
         Format(tmp, sizeof(tmp), "players[%d]", i);
-        Steam_SetHTTPRequestGetOrPostParameterInt(request, "players[]", player);
+        Steam_SetHTTPRequestGetOrPostParameterInt(request, tmp, player);
         i++;
     }
 
     
-    new userid=GetClientUserId(caller);
-    Steam_SendHTTPRequest(request, ReceiveHaveNotVoted, userid);
+
+    new userid=0;
+    if (caller > 0)
+    {
+        userid=GetClientUserId(caller);
+    }
+
+    //Don't bother if nothing matched
+    if(i > 0)
+    {
+        Steam_SendHTTPRequest(request, ReceiveHaveNotVoted, userid);
+    }
 }
 
 public ReceiveHaveNotVoted(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid)
