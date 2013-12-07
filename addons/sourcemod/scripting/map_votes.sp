@@ -94,6 +94,8 @@ public OnPluginStart()
 
     RegAdminCmd("sm_have_not_voted", Command_HaveNotVoted, ADMFLAG_VOTE, "Popup a vote panel to every player on the server that has not yet voted on this map");
 
+    RegConsoleCmd("sm_test", Command_Test, "TODO - TEST");//TODO
+
     new array_size = ByteCountToCells(PLATFORM_MAX_PATH);        
     g_MapList = CreateArray(array_size);
     g_MapTrie = CreateTrie();
@@ -745,6 +747,7 @@ public HaveNotVoted(caller)
 {
     decl String:uid[MAX_COMMUNITYID_LENGTH];
     decl String:map[PLATFORM_MAX_PATH];
+    decl String:tmp[64];
     new player;
     new HTTPRequestHandle:request = CreateMapVotesRequest(HAVE_NOT_VOTED_ROUTE);
 
@@ -758,6 +761,7 @@ public HaveNotVoted(caller)
     GetCurrentMap(map, sizeof(map));
     Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
 
+    new i = 0;
     for (new client=1; client <= MaxClients; client++)
     {
         if (!IsClientInGame(client) || IsFakeClient(client))
@@ -767,8 +771,11 @@ public HaveNotVoted(caller)
         Steam_GetCSteamIDForClient(client, uid, sizeof(uid));
         player = GetClientUserId(client);
 
+        Format(tmp, sizeof(tmp), "uids[%d]", i);
         Steam_SetHTTPRequestGetOrPostParameter(request, "uids[]", uid);
+        Format(tmp, sizeof(tmp), "players[%d]", i);
         Steam_SetHTTPRequestGetOrPostParameterInt(request, "players[]", player);
+        i++;
     }
 
     
@@ -869,3 +876,57 @@ public ViewMap(client)
 
 }
 
+//TODO - delete everything below
+public Action:Command_Test(client, args)
+{
+    decl String:uid[MAX_COMMUNITYID_LENGTH];
+    decl String:map[PLATFORM_MAX_PATH];
+    new player;
+    new HTTPRequestHandle:request = CreateMapVotesRequest(HAVE_NOT_VOTED_ROUTE);
+
+
+    GetCurrentMap(map, sizeof(map));
+    Steam_SetHTTPRequestGetOrPostParameter(request, "map", map);
+
+    Steam_SetHTTPRequestGetOrPostParameter(request, "uids[0]", "76561198013926395");
+    Steam_SetHTTPRequestGetOrPostParameterInt(request, "players[0]", 1);
+    Steam_SetHTTPRequestGetOrPostParameter(request, "uids[1]", "76561198005175623");
+    Steam_SetHTTPRequestGetOrPostParameterInt(request, "players[1]", 2);
+    Steam_SetHTTPRequestGetOrPostParameter(request, "uids[2]", "76561198013600577");
+    Steam_SetHTTPRequestGetOrPostParameterInt(request, "players[2]", 6);
+    Steam_SetHTTPRequestGetOrPostParameter(request, "uids[3]", "76561198055205178");
+    Steam_SetHTTPRequestGetOrPostParameterInt(request, "players[3]", 17);
+
+
+    new userid= client ? GetClientUserId(client) : 0;
+    Steam_SendHTTPRequest(request, ReceiveTest, userid);
+
+
+    return Plugin_Handled;
+}
+public ReceiveTest(HTTPRequestHandle:request, bool:successful, HTTPStatusCode:code, any:userid)
+{
+    new client = GetClientOfUserId(userid);
+    if(!successful || code != HTTPStatusCode_OK)
+    {
+        LogError("[MapVotes] Error at RecivedHaveNotVoted (HTTP Code %d)", code);
+        Steam_ReleaseHTTPRequest(request);
+        return;
+    }
+
+    decl String:data[4096];
+    Steam_GetHTTPResponseBodyData(request, data, sizeof(data));
+
+    new Handle:json = json_load(data);
+    new Handle:players = json_object_get(json, "players");
+    decl p;
+
+    new count=json_array_size(players);
+    CPrintToChatAll("%t", "have_not_voted", count);
+    CPrintToChatAll("%s", data);
+    PrintToConsole(0, "%s", data);
+
+    CloseHandle(json);
+    CloseHandle(players);
+    Steam_ReleaseHTTPRequest(request);
+}
