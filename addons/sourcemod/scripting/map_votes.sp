@@ -49,6 +49,7 @@ new Handle:g_Cvar_MapVotesNominationsName = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesRequestCooldownTime = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesCallAutoVoteTime = INVALID_HANDLE;
 
+
 new g_ClientCooldown[MAXPLAYERS+1];
 new g_ClientMapStartTimestamp[MAXPLAYERS+1];
 
@@ -738,6 +739,9 @@ public CallVoteOnClient(client)
 {
     new Handle:menu = CreateMenu(VoteMenuHandler);
     SetMenuTitle(menu, "Do you like this map?");
+    AddMenuItem(menu, "0", "", ITEMDRAW_DISABLED);
+    AddMenuItem(menu, "0", "", ITEMDRAW_DISABLED);
+    AddMenuItem(menu, "0", "", ITEMDRAW_DISABLED);
     AddMenuItem(menu, "1","Like it.");
     AddMenuItem(menu, "-1","Hate it.");
     AddMenuItem(menu, "0","I have no strong feelings one way or the other.");
