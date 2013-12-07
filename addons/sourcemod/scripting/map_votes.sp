@@ -48,7 +48,7 @@ new Handle:g_Cvar_MapVotesCommentingEnabled = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesNominationsName = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesRequestCooldownTime = INVALID_HANDLE;
 
-new bool:g_IsInCooldown[MAXPLAYERS+1];
+new Float:g_ClientCooldown[MAXPLAYERS+1];
 
 new g_MapStartTimestamp = 0;
 
@@ -391,8 +391,7 @@ public StartCooldown(client)
     if (client == 0)
         return;
 
-    g_IsInCooldown[client] = true;
-    CreateTimer(GetConVarFloat(g_Cvar_MapVotesRequestCooldownTime), RemoveCooldown, client);
+    g_ClientCooldown[client] = GetTime() + GetConVarFloat(g_Cvar_MapVotesRequestCooldownTime);
 }
 
 public bool:IsClientInCooldown(client)
@@ -400,12 +399,7 @@ public bool:IsClientInCooldown(client)
     if(client == 0)
         return false;
     else
-        return g_IsInCooldown[client];
-}
-
-public Action:RemoveCooldown(Handle:timer, any:client)
-{
-    g_IsInCooldown[client] = false;
+        return g_ClientCooldown[client] < GetTime();
 }
 
 public WriteMessage(client, String:message[256])
