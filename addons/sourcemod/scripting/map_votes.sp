@@ -49,8 +49,8 @@ new Handle:g_Cvar_MapVotesNominationsName = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesRequestCooldownTime = INVALID_HANDLE;
 new Handle:g_Cvar_MapVotesCallAutoVoteTime = INVALID_HANDLE;
 
-new Float:g_ClientCooldown[MAXPLAYERS+1];
-new Float:g_ClientMapStartTime[MAXPLAYERS+1];
+new g_ClientCooldown[MAXPLAYERS+1];
+new g_ClientMapStartTime[MAXPLAYERS+1];
 
 new g_MapStartTimestamp = 0;
 
@@ -77,8 +77,8 @@ public OnPluginStart()
     g_Cvar_MapVotesVotingEnabled = CreateConVar("sm_map_votes_voting_enabled", "1", "Whether players are allowed to vote on the current map");
     g_Cvar_MapVotesCommentingEnabled = CreateConVar("sm_map_votes_commenting_enabled", "1", "Whether players are allowed to comment on the current map");
     g_Cvar_MapVotesNominationsName = CreateConVar("sm_map_votes_nominations_plugin", "nominations.smx", "The nominations plugin used by the server");
-    g_Cvar_MapVotesRequestCooldownTime = CreateConVar("sm_map_votes_request_cooldown_time", "2.0", "How long in seconds before a client can send another http request");
-    g_Cvar_MapVotesCallAutoVoteTime = CreateConVar("sm_map_votes_call_auto_vote_time", "1200.0", "How long in seconds before a client is automaticly asked to vote on the current map");
+    g_Cvar_MapVotesRequestCooldownTime = CreateConVar("sm_map_votes_request_cooldown_time", "2", "How long in seconds before a client can send another http request");
+    g_Cvar_MapVotesCallAutoVoteTime = CreateConVar("sm_map_votes_call_auto_vote_time", "1200", "How long in seconds before a client is automaticly asked to vote on the current map");
 
     RegConsoleCmd("sm_votemenu", Command_VoteMenu, "Bring up a menu to vote on the current map");
     RegConsoleCmd("sm_voteup", Command_VoteUp, "Vote that you like the current map");
@@ -394,7 +394,8 @@ public StartCooldown(client)
     if (client == 0)
         return;
 
-    g_ClientCooldown[client] = GetTime() + GetConVarFloat(g_Cvar_MapVotesRequestCooldownTime);
+    g_ClientCooldown[client] = GetTime() + GetConVarInt(g_Cvar_MapVotesRequestCooldownTime);
+    PrintToChatAll("%d -> %d", GetTime(), g_ClientCooldown[client]);
 }
 
 public bool:IsClientInCooldown(client)
@@ -402,7 +403,7 @@ public bool:IsClientInCooldown(client)
     if(client == 0)
         return false;
     else
-        return g_ClientCooldown[client] < GetTime();
+        return g_ClientCooldown[client] > GetTime();
 }
 
 public WriteMessage(client, String:message[256])

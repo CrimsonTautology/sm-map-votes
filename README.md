@@ -30,9 +30,9 @@ CVARs:
 - `sm_map_votes_nominations_plugin` The nominations plugin used by the server
     Defaults to `"nominations.smx"`
 - `sm_map_votes_request_cooldown_time` How long in seconds before a client can send another http request
-    Defaults to 2.0
+    Defaults to 2
 - `sm_map_votes_call_auto_vote_time` How long in seconds before a client is automaticly asked to vote on the current map
-    Defaults to 1200.0 (20 minutes)
+    Defaults to 1200 (20 minutes)
 
 
 
