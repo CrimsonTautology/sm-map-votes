@@ -97,8 +97,6 @@ public OnPluginStart()
 
     RegAdminCmd("sm_have_not_voted", Command_HaveNotVoted, ADMFLAG_VOTE, "Popup a vote panel to every player on the server that has not yet voted on this map");
 
-    RegConsoleCmd("sm_test", Command_Test, "TODO - TEST");//TODO
-
     HookEvent("round_start", Event_RoundStart);
     HookEvent("teamplay_round_start", Event_RoundStart);
     new array_size = ByteCountToCells(PLATFORM_MAX_PATH);        
@@ -327,9 +325,10 @@ public Action:Command_HaveNotVoted(client, args)
 
 public Action:Event_RoundStart(Handle:event, const String:name[], bool:dontBroadcast)
 {
-    //TODO
-    PrintToChatAll("Event_RoundStart");
-    HaveNotVoted(0, GetConVarInt(g_Cvar_MapVotesCallAutoVoteTime));
+    if(!GetConVarBool(g_Cvar_MapVotesVotingEnabled))
+    {
+        HaveNotVoted(0, GetConVarInt(g_Cvar_MapVotesCallAutoVoteTime));
+    }
 }
 
 
@@ -409,7 +408,6 @@ public StartCooldown(client)
         return;
 
     g_ClientCooldown[client] = GetTime() + GetConVarInt(g_Cvar_MapVotesRequestCooldownTime);
-    PrintToChatAll("%d -> %d", GetTime(), g_ClientCooldown[client]);
 }
 
 public bool:IsClientInCooldown(client)
