@@ -102,7 +102,6 @@ public OnPluginStart()
     new array_size = ByteCountToCells(PLATFORM_MAX_PATH);        
     g_MapList = CreateArray(array_size);
     g_MapTrie = CreateTrie();
-    BuildMapListAndTrie();
 }
 
 public OnMapStart()
