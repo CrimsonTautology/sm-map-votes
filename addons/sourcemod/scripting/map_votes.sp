@@ -405,7 +405,6 @@ public StartCooldown(client)
         return;
 
     g_ClientCooldown[client] = GetTime() + GetConVarInt(g_Cvar_MapVotesRequestCooldownTime);
-    PrintToChatAll("%d -> %d", GetTime(), g_ClientCooldown[client]);
 }
 
 public bool:IsClientInCooldown(client)
