@@ -27,7 +27,7 @@
     }
     "announce_favorite"
     {
-        "#format"   "{1:s}, {2:s}"
+        "#format"   "{1:s},{2:s}"
         "en"    "{khaki}{1} favorited {2}"
     }
 
