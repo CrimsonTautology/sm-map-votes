@@ -18,7 +18,7 @@
 #include <smjansson>
 #include <morecolors>
 
-#define PLUGIN_VERSION "0.1"
+#define PLUGIN_VERSION "0.2"
 
 public Plugin:myinfo = {
     name = "MapVotes",
@@ -908,7 +908,13 @@ public ViewMap(client)
     Format(url, sizeof(url),
             "%s%s/%s", base_url, MAPS_ROUTE, map);
 
-    ShowMOTDPanel(client, "Map Viewer", url, MOTDPANEL_TYPE_URL);
+    new Handle:panel = CreateKeyValues("data");
+    KvSetString(panel, "title", "Map Viewer");
+    KvSetNum(panel, "type", MOTDPANEL_TYPE_URL);
+    KvSetString(panel, "msg", url);
+    KvSetNum(panel, "customsvr", 1); //Sets motd to be fullscreen
 
+    ShowVGUIPanel(client, "info", panel, true);
+    CloseHandle(panel);
 }
 
