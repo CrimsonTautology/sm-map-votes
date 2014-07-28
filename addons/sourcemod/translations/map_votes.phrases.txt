@@ -2,69 +2,69 @@
 {
     "comment_added"
     {
-        "en"    "{orange}[MapVotes] Comment Added"
+        "en"    "[MapVotes] {success}Comment Added"
     }
 
     "vote_cast"
     {
-        "en"    "{orange}[MapVotes] Vote Cast"
+        "en"    "[MapVotes] {success}Vote Cast"
     }
 
     "announce_up_vote"
     {
         "#format"   "{1:s}"
-        "en"    "{darkgreen}{1} likes this map"
+        "en"    "{infod}{1}{info} likes this map"
     }
     "announce_down_vote"
     {
         "#format"   "{1:s}"
-        "en"    "{crimson}{1} hates this map"
+        "en"    "{infod}{1}{info} hates this map"
     }
     "announce_comment"
     {
         "#format"   "{1:s}"
-        "en"    "{darkcyan}{1} commented on this map"
+        "en"    "{infod}{1}{info} commented on this map"
     }
     "announce_favorite"
     {
         "#format"   "{1:s},{2:s}"
-        "en"    "{khaki}{1} favorited {2}"
+        "en"    "{info}{1} favorited {infod}{2}"
     }
 
     "updated_favorites"
     {
-        "en"    "{orange}[MapVotes] Updated Favorites"
+        "en"    "[MapVotes] {success}Updated Favorites"
     }
 
     "have_not_voted"
     {
         "#format"   "{1:i}"
-        "en"    "{orange}[MapVotes] {1} players have not voted"
+        "en"    "[MapVotes] {infod}{1}{info} players have not voted"
     }
 
     "url_invalid"
     {
-        "en"    "{orange}[MapVotes] sm_map_votes_url invalid; cannot create HTTP request"
+        "en"    "[MapVotes] {danger}sm_map_votes_url invalid; cannot create HTTP request"
     }
 
     "user_cooldown"
     {
-        "en"    "{orange}[MapVotes] User in cooldown"
+        "en"    "[MapVotes] {danger}User in cooldown"
     }
 
     "voting_not_enabled"
     {
-        "en"    "{orange}[MapVotes] Voting not enabled"
+        "en"    "[MapVotes] {danger}Voting not enabled"
     }
 
     "map_comment_usage"
     {
-        "en"    "{orange}[MapVotes] Usage: !map_comment <comment>"
+        "en"    "[MapVotes] {danger}Usage: {dangerd}!map_comment <comment>"
     }
 
     "no_favorited_maps"
     {
-        "en"    "{orange}[MapVotes] You have no favorited maps that are on this server."
+        "en"    "[MapVotes] {warning}You have no favorited maps that are on this server."
     }
 
 
