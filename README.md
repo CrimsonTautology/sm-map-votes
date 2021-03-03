@@ -1,7 +1,7 @@
 # Map Votes
-[![Build Status](https://travis-ci.org/CrimsonTautology/sm_map_votes.png?branch=master)](https://travis-ci.org/CrimsonTautology/sm_map_votes)
+[![Build Status](https://travis-ci.org/CrimsonTautology/sm-map-votes.png?branch=master)](https://travis-ci.org/CrimsonTautology/sm-map-votes)
 
-Sourcemod Plugin to connect with the [Map Votes API](https://github.com/CrimsonTautology/map_votes).
+Sourcemod Plugin to connect with the [Map Votes API](https://github.com/CrimsonTautology/map-votes).
 
 ##Installation
 * Install the [Steam Tools](http://forums.alliedmods.net/showthread.php?t=170630) Sourcemod extension.
@@ -17,7 +17,7 @@ Sourcemod Plugin to connect with the [Map Votes API](https://github.com/CrimsonT
 ##Requirements
 * [SMJansson](https://forums.alliedmods.net/showthread.php?t=184604)
 * [SteamTools](https://forums.alliedmods.net/showthread.php?t=129763)
-* [A Web Site Backend](https://github.com/CrimsonTautology/map_votes)
+* [A Web Site Backend](https://github.com/CrimsonTautology/map-votes)
 
 ##CVARs
 
